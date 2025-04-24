@@ -18,7 +18,10 @@ const jugador = {
     combatesDisponibles: 12,
     combatesMaximos: 12,
     ultimoCombate: null,
-    tiempoRecarga: 120000, // 2 minutos en milisegundos
+    ultimaCuracion: null,
+    tiempoCuracion: 300000, // 5 minutos en milisegundos
+    vidaPorCuracion: 20,
+    intervaloCuracion: null, // Para almacenar el intervalo del temporizador
     
     statsBase: {
         fuerza: 5,
@@ -55,65 +58,97 @@ const jugador = {
 
 // Tipos de items y sus imágenes
 const tiposItems = {
-    casco: { nombre: "Casco", img: "casco.png" },
-    pechera: { nombre: "Pechera", img: "pechera.png" },
-    guantes: { nombre: "Guantes", img: "guantes.png" },
-    botas: { nombre: "Botas", img: "botas.png" },
-    arma: { nombre: "Arma", img: "espada.png" },
-    escudo: { nombre: "Escudo", img: "escudo.png" },
-    anillo: { nombre: "Anillo", img: "anillo.png" },
-    pendiente: { nombre: "Pendiente", img: "pendiente.png" }
+    casco: { nombre: "Casco", img: "ropa/casco.png" },
+    pechera: { nombre: "Pechera", img: "ropa/pechera.png" },
+    guantes: { nombre: "Guantes", img: "ropa/guantes.png" },
+    botas: { nombre: "Botas", img: "ropa/botas.png" },
+    arma: { nombre: "Arma", img: "ropa/espada.png" },
+    escudo: { nombre: "Escudo", img: "ropa/escudo.png" },
+    anillo: { nombre: "Anillo", img: "ropa/anillo.png" },
+    pendiente: { nombre: "Pendiente", img: "ropa/pendiente.png" }
 };
 
-// Enemigos base
+// Enemigos base (actualizados con nuevas estadísticas)
 const enemigosBase = [
     { 
         id: 1,
         nombre: "Rata gigante", 
-        vida: 30, 
-        vidaMax: 30,
-        ataque: 5, 
-        defensa: 2, 
-        imagen: "rata.png",
+        nivel: [1, 2],
+        vida: 59, 
+        vidaMax: 140,
+        ataque: 2, 
+        defensa: 1, 
+        fuerza: 1,
+        habilidad: 2,
+        agilidad: 2,
+        constitucion: 2,
+        carisma: 1,
+        inteligencia: 2,
+        imagen: "enemigo/rata.png",
         derrotado: false,
         oro: 10,
-        exp: 15
+        exp: 15,
+        descripcion: "Fuerza: Diminuto, Habilidad: Débil, Agilidad: Muy débil, Constitución: Diminuto, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Insignificante, Daño: Diminuto"
     },
     { 
         id: 2,
         nombre: "Lince salvaje", 
-        vida: 50,
-        vidaMax: 50,
-        ataque: 8, 
-        defensa: 3, 
-        imagen: "lince.png",
+        nivel: [2, 5],
+        vida: 118, 
+        vidaMax: 350,
+        ataque: 3, 
+        defensa: 1, 
+        fuerza: 2,
+        habilidad: 3,
+        agilidad: 2,
+        constitucion: 2,
+        carisma: 1,
+        inteligencia: 2,
+        imagen: "enemigo/lince.png",
         derrotado: false,
         oro: 20,
-        exp: 25
+        exp: 25,
+        descripcion: "Fuerza: Diminuto, Habilidad: Débil, Agilidad: Muy débil, Constitución: Diminuto, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Insignificante, Daño: Diminuto"
     },
     { 
         id: 3,
         nombre: "Lobo feroz", 
-        vida: 70,
-        vidaMax: 70,
-        ataque: 12, 
-        defensa: 5, 
-        imagen: "lobo.png",
+        nivel: [4, 8],
+        vida: 237, 
+        vidaMax: 560,
+        ataque: 4, 
+        defensa: 1, 
+        fuerza: 3,
+        habilidad: 2,
+        agilidad: 2,
+        constitucion: 2,
+        carisma: 1,
+        inteligencia: 2,
+        imagen: "enemigo/lobo.png",
         derrotado: false,
         oro: 35,
-        exp: 40
+        exp: 40,
+        descripcion: "Fuerza: Muy débil, Habilidad: Muy débil, Agilidad: Muy débil, Constitución: Diminuto, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Insignificante, Daño: Insignificante"
     },
     { 
         id: 4,
         nombre: "Oso pardo", 
-        vida: 100,
-        vidaMax: 100,
-        ataque: 15, 
-        defensa: 8, 
-        imagen: "oso.png",
+        nivel: [8, 10],
+        vida: 475, 
+        vidaMax: 700,
+        ataque: 6, 
+        defensa: 3, 
+        fuerza: 5,
+        habilidad: 2,
+        agilidad: 2,
+        constitucion: 4,
+        carisma: 1,
+        inteligencia: 2,
+        imagen: "enemigo/oso.png",
         derrotado: false,
         oro: 50,
-        exp: 60
+        exp: 60,
+        descripcion: "Fuerza: Inferior a la media, Habilidad: Diminuto, Agilidad: Diminuto, Constitución: Débil, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Muy débil, Daño: Muy débil"
     }
 ];
 
@@ -121,31 +156,31 @@ const enemigosBase = [
 const ubicaciones = {
     'Bosque Sombrio': { 
         niveles: [1, 10],
-        enemigos: [1, 2] // IDs de enemigos (Rata gigante y Lince salvaje)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     },
     'Puerto Pirata': { 
         niveles: [11, 20],
-        enemigos: [2, 3]  // Lince salvaje y Lobo feroz
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     },
     'Montañas Nubladas': { 
         niveles: [21, 30],
-        enemigos: [3, 4] // Lobo feroz y Oso pardo
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     },
     'Cueva del Lobo': { 
         niveles: [31, 40],
-        enemigos: [3] // Solo Lobo feroz
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     },
     'Templo Antiguo': { 
         niveles: [41, 50],
-        enemigos: [1, 4] // Rata gigante y Oso pardo
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     },
     'Pueblo Bárbaro': { 
         niveles: [51, 60],
-        enemigos: [2, 3, 4] // Lince, Lobo y Oso
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     },
     'Campamento Bandido': { 
         niveles: [61, 70],
-        enemigos: [1, 2, 3] // Rata, Lince y Lobo
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
     }
 };
 
@@ -229,7 +264,7 @@ function filtrarInventario(filtro) {
             </div>
         `;
         
-        itemElement.addEventListener("click", () => equiparItem(item.id));
+        itemElement.onclick = () => equiparItem(item.id);
         itemsContainer.appendChild(itemElement);
     });
 }
@@ -237,48 +272,65 @@ function filtrarInventario(filtro) {
 function equiparItem(itemId) {
     const item = jugador.inventario.find(i => i.id === itemId);
     if (!item) return;
-    
-    // Determinar el slot correcto (especial para anillos)
-    let slot = item.tipo;
-    if (item.tipo === 'anillo') {
-        slot = jugador.equipo.anillo1 ? 'anillo2' : 'anillo1';
+
+    let slot;
+    switch(item.tipo) {
+        case 'anillo':
+            slot = jugador.equipo.anillo1 ? 'anillo2' : 'anillo1';
+            break;
+        case 'arma':
+        case 'escudo':
+        case 'casco':
+        case 'pechera':
+        case 'guantes':
+        case 'botas':
+        case 'pendiente':
+            slot = item.tipo;
+            break;
+        default: return;
     }
     
-    // Verificar si ya está equipado
-    if (jugador.equipo[slot] && jugador.equipo[slot].id === itemId) {
-        desequiparItem(slot);
-        return;
-    }
-    
-    // Primero desequipar el item actual si existe
+    // Desequipar primero si ya hay algo en ese slot
     if (jugador.equipo[slot]) {
         desequiparItem(slot);
     }
     
     // Equipar el nuevo item
-    jugador.equipo[slot] = item;
+    const itemIndex = jugador.inventario.findIndex(i => i.id === itemId);
+    jugador.equipo[slot] = jugador.inventario[itemIndex];
+    jugador.inventario.splice(itemIndex, 1);
     
-    // Aplicar bonificaciones de stats
+    // Aplicar bonificaciones
+    aplicarBonificacionesItem(jugador.equipo[slot], 'add');
+    actualizarUI();
+}
+
+// Función auxiliar para aplicar/remover bonificaciones
+function aplicarBonificacionesItem(item, action) {
+    const multiplier = action === 'add' ? 1 : -1;
     Object.entries(item).forEach(([key, val]) => {
         if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
-            jugador.statsBase[key] += val;
+            jugador.statsBase[key] += val * multiplier;
         }
     });
-    
-    actualizarUI();
 }
 
 function desequiparItem(slot) {
     const item = jugador.equipo[slot];
     if (!item) return;
-    
+
+    console.log(`[DEBUG] Desequipando: ${item.nombre} de slot ${slot}`); 
+
     // Remover bonificaciones de stats
     Object.entries(item).forEach(([key, val]) => {
         if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
+            console.log(`[DEBUG] Removiendo bono de ${key}: -${val}`);
             jugador.statsBase[key] -= val;
         }
     });
-    
+
+    aplicarBonificacionesItem(item, 'remove');
+    jugador.inventario.push(item);
     jugador.equipo[slot] = null;
     actualizarUI();
 }
@@ -297,6 +349,12 @@ function actualizarVestuarioUI() {
             img.src = jugador.equipo[slot].img;
             img.alt = jugador.equipo[slot].nombre;
             slotElement.appendChild(img);
+
+            // Añadir evento para desequipar
+            slotElement.onclick = () => desequiparItem(slot);
+        } else {
+            // Limpiar eventos si no hay item
+            slotElement.onclick = null;
         }
     });
     
@@ -493,6 +551,12 @@ function actualizarUI() {
     actualizarUbicacionesUI();
     
     localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
+
+    // Verificar si la vida llegó al máximo para detener el temporizador
+    if (jugador.vida >= jugador.vidaMax && jugador.intervaloCuracion) {
+        clearInterval(jugador.intervaloCuracion);
+        document.getElementById("curacion-timer").textContent = "Completo";
+    }
 }
 
 function actualizarUbicacionesUI() {
@@ -541,42 +605,42 @@ function seleccionarUbicacion(nombreUbicacion) {
         return;
     }
 
-    // Filtrar enemigos basados en la ubicación seleccionada
-    const enemigosUbicacion = enemigosBase.filter(enemigo => 
-        ubicacion.enemigos.includes(enemigo.id));
-    
-    // Escalar enemigos según el nivel del jugador
-    const enemigosEscalados = enemigosUbicacion.map(enemigo => {
-        const nivelBase = ubicacion.niveles[0];
-        const factorEscala = 1 + (jugador.nivel - nivelBase) * 0.1;
+// Filtrar enemigos basados en la ubicación seleccionada
+const enemigosUbicacion = enemigosBase.filter(enemigo => 
+    ubicacion.enemigos.includes(enemigo.id));
+
+// Escalar enemigos según el nivel del jugador
+const enemigosEscalados = enemigosUbicacion.map(enemigo => {
+    const nivelBase = ubicacion.niveles[0];
+    const factorEscala = 1 + (jugador.nivel - nivelBase) * 0.1;
         
-        return {
-            ...enemigo,
-            vida: Math.floor(enemigo.vida * factorEscala),
-            vidaMax: Math.floor(enemigo.vidaMax * factorEscala),
-            ataque: Math.floor(enemigo.ataque * factorEscala),
-            defensa: Math.floor(enemigo.defensa * factorEscala),
-            oro: Math.floor(enemigo.oro * factorEscala),
-            exp: Math.floor(enemigo.exp * factorEscala),
-            derrotado: false
-        };
-    });
-    
-    // Iniciar combate con estos enemigos
-    if (!usarCombate()) {
+    return {
+        ...enemigo,
+        vida: Math.floor(enemigo.vida * factorEscala),
+        vidaMax: Math.floor(enemigo.vidaMax * factorEscala),
+        ataque: Math.floor(enemigo.ataque * factorEscala),
+        defensa: Math.floor(enemigo.defensa * factorEscala),
+        fuerza: Math.floor(enemigo.fuerza * factorEscala),
+        habilidad: Math.floor(enemigo.habilidad * factorEscala),
+        agilidad: Math.floor(enemigo.agilidad * factorEscala),
+        constitucion: Math.floor(enemigo.constitucion * factorEscala),
+        carisma: Math.floor(enemigo.carisma * factorEscala),
+        inteligencia: Math.floor(enemigo.inteligencia * factorEscala),
+        oro: Math.floor(enemigo.oro * factorEscala),
+        exp: Math.floor(enemigo.exp * factorEscala),
+        derrotado: false
+    };
+});
+
+        // Iniciar combate con estos enemigos (sin descontar combate todavía)
+        enemigosActuales = [...enemigosEscalados];
+        enCombate = true;
+        ubicacionActual = nombreUbicacion;
+        actualizarEnemigosUI();
         document.getElementById("log-combate").textContent = 
-            "No tienes combates disponibles. Espera a que se recarguen.";
-        return;
-    }
-    
-    enemigosActuales = [...enemigosEscalados];
-    enCombate = true;
-    ubicacionActual = nombreUbicacion;
-    actualizarEnemigosUI();
-    document.getElementById("log-combate").textContent = 
-        `Explorando ${nombreUbicacion} (Nivel ${ubicacion.niveles[0]}-${ubicacion.niveles[1]})... ¡Selecciona un enemigo para atacar!`;
-    actualizarCombatesUI();
-}
+            `Explorando ${nombreUbicacion} (Nivel ${ubicacion.niveles[0]}-${ubicacion.niveles[1]})... ¡Selecciona un enemigo para atacar!`;
+        actualizarCombatesUI();
+        }
 
 function actualizarEnemigosUI() {
     const grid = document.getElementById("enemigos-grid");
@@ -594,13 +658,17 @@ function actualizarEnemigosUI() {
         card.className = clases;
         card.innerHTML = `
             <img src="${enemigo.imagen}" alt="${enemigo.nombre}">
-            <h3>${enemigo.nombre}</h3>
+            <h3>${enemigo.nombre} (Nv. ${enemigo.nivel[0]}-${enemigo.nivel[1]})</h3>
             <div class="barra-vida">
                 <div class="vida-actual" style="width: ${(enemigo.vida / enemigo.vidaMax) * 100}%"></div>
             </div>
             <p>Vida: ${enemigo.vida}/${enemigo.vidaMax}</p>
             <p>Ataque: ${enemigo.ataque}</p>
             <p>Defensa: ${enemigo.defensa}</p>
+            <p>Fuerza: ${enemigo.fuerza}</p>
+            <p>Habilidad: ${enemigo.habilidad}</p>
+            <p>Agilidad: ${enemigo.agilidad}</p>
+            <p>Constitución: ${enemigo.constitucion}</p>
         `;
         
         // Solo permite clic si hay combates disponibles y el enemigo no está derrotado
@@ -612,8 +680,8 @@ function actualizarEnemigosUI() {
 }
 
 function atacar(indexEnemigo) {
-    if (jugador.combatesDisponibles <= 0 || jugador.vida <= 0) {
-        document.getElementById("log-combate").textContent = "¡No tienes combates disponibles ni vida! Espera a que se recarguen.";
+    if (jugador.combatesDisponibles <= 0) {
+        document.getElementById("log-combate").textContent = "¡No tienes combates disponibles! Espera a que se recarguen.";
         return;
     }
 
@@ -755,30 +823,72 @@ function derrota() {
     actualizarUI();
 }
 
-function curar() {
-    if (jugador.vida < jugador.vidaMax) {
-        const vidaFaltante = jugador.vidaMax - jugador.vida;
-        // Calcular costo: 5 oro por cada 20 de vida (redondeado hacia arriba)
-        const costo = Math.ceil(vidaFaltante / 20) * 5;
-        
-        if (jugador.oro >= costo) {
-            jugador.oro -= costo;
-            jugador.vida = jugador.vidaMax; // Curar completamente
-            document.getElementById("log-combate").textContent = `💊 Te curaste por ${costo} oro.`;
-        } else {
-            const vidaPosible = Math.floor(jugador.oro / 5) * 20;
-            if (vidaPosible > 0) {
-                jugador.oro -= Math.ceil(vidaPosible / 20) * 5;
-                jugador.vida += vidaPosible;
-                document.getElementById("log-combate").textContent = `💊 Recuperaste ${vidaPosible} vida por ${Math.ceil(vidaPosible / 20) * 5} oro.`;
-            } else {
-                document.getElementById("log-combate").textContent = "💰 No tienes suficiente oro (mínimo 5 oro para 20 de vida).";
-            }
-        }
-    } else {
-        document.getElementById("log-combate").textContent = "💊 Ya estás al máximo de vida.";
+function iniciarCuracion() {
+    // Detener cualquier temporizador existente
+    if (jugador.intervaloCuracion) {
+        clearInterval(jugador.intervaloCuracion);
     }
-    actualizarUI();
+
+    // Solo iniciar si la vida no está al máximo
+    if (jugador.vida < jugador.vidaMax) {
+        const ahora = new Date().getTime();
+        jugador.ultimaCuracion = ahora;
+        
+        let tiempoRestante = jugador.tiempoCuracion;
+        actualizarTemporizadorUI(tiempoRestante);
+        
+        jugador.intervaloCuracion = setInterval(() => {
+            tiempoRestante -= 1000;
+            
+            if (tiempoRestante <= 0) {
+                aplicarCuracion();
+                tiempoRestante = jugador.tiempoCuracion;
+                jugador.ultimaCuracion = new Date().getTime();
+            }
+            
+            actualizarTemporizadorUI(tiempoRestante);
+            
+            // Detener si la vida llega al máximo
+            if (jugador.vida >= jugador.vidaMax) {
+                clearInterval(jugador.intervaloCuracion);
+                document.getElementById("curacion-timer").textContent = "Completo";
+            }
+        }, 1000);
+    } else {
+        document.getElementById("curacion-timer").textContent = "Completo";
+    }
+}
+
+function actualizarTemporizadorUI(ms) {
+    const minutos = Math.floor(ms / 60000);
+    const segundos = Math.floor((ms % 60000) / 1000);
+    document.getElementById("curacion-timer").textContent = 
+        `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+}
+
+function aplicarCuracion() {
+    const vidaAnterior = jugador.vida;
+    jugador.vida = Math.min(jugador.vidaMax, jugador.vida + jugador.vidaPorCuracion);
+    const vidaRecuperada = jugador.vida - vidaAnterior;
+    
+    if (vidaRecuperada > 0) {
+        document.getElementById("log-combate").textContent = 
+            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 5 minutos).`;
+        actualizarUI();
+    }
+}
+
+function forzarCuracion() {
+    // Verificar si ya está al máximo
+    if (jugador.vida >= jugador.vidaMax) {
+        document.getElementById("log-combate").textContent = "💚 Ya estás al máximo de vida.";
+        return;
+    }
+    
+    // Reiniciar el temporizador
+    iniciarCuracion();
+    document.getElementById("log-combate").textContent = 
+        "⏳ Temporizador de curación reiniciado. La próxima curación será en 5 minutos.";
 }
 
 // --- SISTEMA DE ENTRENAMIENTO ---
@@ -832,7 +942,10 @@ function cargarJuego() {
         const datos = JSON.parse(datosGuardados);
         Object.assign(jugador, datos);
     }
-    
+
+    // Iniciar el sistema de curación
+    iniciarCuracion();
+
     // Generar algunos items iniciales para prueba
     if (jugador.inventario.length === 0) {
         const espadaInicial = {
@@ -842,7 +955,7 @@ function cargarJuego() {
             danoMin: 2,
             danoMax: 4,
             defensa: 0,
-            img: "espada.png",
+            img: "ropa/espada.png",
             descripcion: "Daño: 2-4",
             precio: 30
         };
@@ -854,62 +967,105 @@ function cargarJuego() {
             danoMin: 0,
             danoMax: 0,
             defensa: 3,
-            img: "pechera.png",
+            img: "ropa/pechera.png",
             descripcion: "Defensa: +3",
             precio: 45
         };
  
         const cascoInicial = {
-            id: 2,
-            nombre: "casco de cuero",
+            id: 3,
+            nombre: "Casco de cuero",
             tipo: "casco",
             danoMin: 0,
             danoMax: 0,
             defensa: 3,
-            img: "casco.png",
+            img: "ropa/casco.png",
             descripcion: "Defensa: +3",
             precio: 45
         };  
         
         const guantesInicial = {
-            id: 2,
-            nombre: "guantes de cuero",
+            id: 4,
+            nombre: "Guantes de cuero",
             tipo: "guantes",
             danoMin: 0,
             danoMax: 0,
             defensa: 3,
-            img: "guantes.png",
+            img: "ropa/guantes.png",
             descripcion: "Defensa: +3",
             precio: 45
         };        
 
         const botasInicial = {
-            id: 2,
-            nombre: "botas de cuero",
+            id: 5,
+            nombre: "Botas de cuero",
             tipo: "botas",
             danoMin: 0,
             danoMax: 0,
             defensa: 3,
-            img: "botas.png",
+            img: "ropa/botas.png",
             descripcion: "Defensa: +3",
             precio: 45
         };
         
         const escudoInicial = {
-            id: 2,
-            nombre: "escudo de madera",
+            id: 6,
+            nombre: "Escudo de madera",
             tipo: "escudo",
             danoMin: 0,
             danoMax: 0,
             defensa: 3,
-            img: "escudo.png",
+            img: "ropa/escudo.png",
             descripcion: "Defensa: +3",
             precio: 45
-        };           
+        };       
         
-        jugador.inventario.push(espadaInicial, armaduraInicial, cascoInicial ,guantesInicial ,botasInicial , escudoInicial);
+        const anilloInicial = {
+            id: 7,
+            nombre: "Blue Ring",
+            tipo: "anillo",
+            danoMin: 0,
+            danoMax: 0,
+            defensa: 3,
+            img: "ropa/Blue_ring.png",
+            descripcion: "Defensa: +3",
+            precio: 45
+        };
+
+        const pendienteInicial = {
+            id: 8,
+            nombre: "Gold symbol",
+            tipo: "pendiente",
+            danoMin: 1,
+            danoMax: 1,
+            defensa: 0,
+            img: "ropa/pendiente.png",
+            descripcion: "Dano: 1-1",
+            precio: 45
+        };
+        
+        const anillo1Inicial = {
+            id: 9,
+            nombre: "Malchite Ring",
+            tipo: "anillo",
+            danoMin: 0,
+            danoMax: 0,
+            defensa: 3,
+            img: "ropa/Malachite_ring.png",
+            descripcion: "Defensa: +3",
+            precio: 45
+        };        
+        
+        jugador.inventario.push(espadaInicial, armaduraInicial, cascoInicial, guantesInicial, botasInicial, escudoInicial, anilloInicial, pendienteInicial, anillo1Inicial);
         equiparItem(1); // Equipar espada
-        equiparItem(2); // Equipar armadura 
+        equiparItem(2); // Equipar armadura
+        equiparItem(3); // Equipar casco 
+        equiparItem(4); // Equipar guantes
+        equiparItem(5); // Equipar botas
+        equiparItem(6); // Equipar escudo   
+        equiparItem(7); // Equipar anillo  
+        equiparItem(8); // Equipar pendiente 
+        equiparItem(9); // Equipar anillo1            
     }
     
     cargarCombates();
