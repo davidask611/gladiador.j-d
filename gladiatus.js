@@ -746,6 +746,8 @@ function atacar(indexEnemigo) {
     } else if (!jugadorVivo) {
         derrota();
     }
+    actualizarUI();
+    verificarCuracionAutomatica(); // <-- Añadir esta línea
 }
 
 function huir() {
@@ -779,8 +781,11 @@ function victoria() {
     let recompensaOro = 0;
     let recompensaExp = 0;
     
+    // Depuración: Mostrar enemigos derrotados
+    console.log("Enemigos derrotados:");
     enemigosActuales.forEach(enemigo => {
         if (enemigo.derrotado) {
+            console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
             recompensaOro += enemigo.oro;
             recompensaExp += enemigo.exp;
         }
@@ -789,21 +794,37 @@ function victoria() {
     const bonusCarisma = 1 + (jugador.statsBase.carisma * 0.1);
     const oroFinal = Math.floor(recompensaOro * bonusCarisma);
     
+    // Depuración: Mostrar cálculos
+    console.log(`Oro base: ${recompensaOro}, Bonus carisma: ${bonusCarisma}, Oro final: ${oroFinal}`);
+    console.log(`Experiencia: ${recompensaExp}`);
+    
+    // Asegurarse de que siempre se reciba oro y experiencia
+    const oroAnterior = jugador.oro;
+    const expAnterior = jugador.exp;
+    
     jugador.oro += oroFinal;
     jugador.exp += recompensaExp;
     jugador.victorias++;
     
-    document.getElementById("log-combate").textContent += 
-        `\n\n🎉 ¡Victoria en ${ubicacionActual}! Ganaste ${oroFinal} oro y ${recompensaExp} experiencia.`;
+    // Depuración: Verificar cambios
+    console.log(`Oro antes: ${oroAnterior}, después: ${jugador.oro}`);
+    console.log(`Exp antes: ${expAnterior}, después: ${jugador.exp}`);
     
-    // 50% de chance de obtener un item
-    if (Math.random() > 0.5) {
+    // Actualizar el log con las recompensas
+    let mensaje = document.getElementById("log-combate").textContent;
+    mensaje += `\n\n🎉 ¡Victoria en ${ubicacionActual}! Ganaste ${oroFinal} oro y ${recompensaExp} experiencia.`;
+    
+    // Aumentado a 70% la probabilidad de obtener un item
+    if (Math.random() <= 0.7) {
         const nivelZona = ubicaciones[ubicacionActual].niveles[0];
         const nuevoItem = generarItemAleatorio(nivelZona);
         jugador.inventario.push(nuevoItem);
-        document.getElementById("log-combate").textContent += 
-            `\n\n🎁 ¡Has obtenido ${nuevoItem.nombre}!`;
+        mensaje += `\n\n🎁 ¡Has obtenido ${nuevoItem.nombre}!`;
+        console.log("Item obtenido:", nuevoItem);
     }
+    
+    // Asegurarse de que el mensaje se añade al log existente
+    document.getElementById("log-combate").textContent = mensaje;
     
     enCombate = false;
     ubicacionActual = "";
@@ -813,6 +834,13 @@ function victoria() {
     }
     
     actualizarUI();
+    
+    // Depuración adicional
+    console.log("Estado final del jugador:", {
+        oro: jugador.oro,
+        exp: jugador.exp,
+        victorias: jugador.victorias
+    });
 }
 
 function derrota() {
@@ -827,6 +855,7 @@ function iniciarCuracion() {
     // Detener cualquier temporizador existente
     if (jugador.intervaloCuracion) {
         clearInterval(jugador.intervaloCuracion);
+        jugador.intervaloCuracion = null;
     }
 
     // Solo iniciar si la vida no está al máximo
@@ -859,6 +888,13 @@ function iniciarCuracion() {
     }
 }
 
+// Añadir esta función para verificar y activar la curación automáticamente
+function verificarCuracionAutomatica() {
+    if (jugador.vida < jugador.vidaMax && !jugador.intervaloCuracion) {
+        iniciarCuracion();
+    }
+}
+
 function actualizarTemporizadorUI(ms) {
     const minutos = Math.floor(ms / 60000);
     const segundos = Math.floor((ms % 60000) / 1000);
@@ -872,6 +908,7 @@ function aplicarCuracion() {
     const vidaRecuperada = jugador.vida - vidaAnterior;
     
     if (vidaRecuperada > 0) {
+        iniciarCuracion()
         document.getElementById("log-combate").textContent = 
             `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 5 minutos).`;
         actualizarUI();
@@ -933,6 +970,7 @@ function mejorarStat(stat) {
     }
     
     actualizarUI();
+    verificarCuracionAutomatica(); // <-- Añadir esta línea
 }
 
 // --- INICIALIZACIÓN ---
@@ -1071,6 +1109,7 @@ function cargarJuego() {
     cargarCombates();
     actualizarUI();
     actualizarCombatesUI();
+    verificarCuracionAutomatica(); // <-- Añadir esta línea
 }
 
 window.addEventListener('load', cargarJuego);
