@@ -1,7 +1,7 @@
 // --- DATOS DEL JUEGO ---
 const jugador = {
     nombre: "Ovak",
-    nivel: 1,
+    nivel: 10,
     vida: 100,
     vidaMax: 100,
     exp: 0,
@@ -194,7 +194,7 @@ function generarItemAleatorio(nivelZona) {
     const tipos = Object.keys(tiposItems);
     const tipo = tipos[Math.floor(Math.random() * tipos.length)];
     const nivel = Math.floor(Math.random() * 10) + nivelZona;
-    
+
     // Variables para el item
     let danoMin = 0;
     let danoMax = 0;
@@ -214,7 +214,7 @@ function generarItemAleatorio(nivelZona) {
     const stats = ['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'];
     const statMejorado = stats[Math.floor(Math.random() * stats.length)];
     const bonusStat = Math.floor(Math.random() * 11) + 5;
-    
+
     return {
         id: Date.now(),
         nombre: `${tiposItems[tipo].nombre} Nv${nivel}`,
@@ -274,6 +274,12 @@ function equiparItem(itemId) {
     const item = jugador.inventario.find(i => i.id === itemId);
     if (!item) return;
 
+    // Verificar nivel del jugador vs nivel del ítem
+    if (item.nivel > jugador.nivel) {
+        alert(`¡No tienes el nivel suficiente para equipar este ítem!\nNecesitas ser nivel ${item.nivel} (Tu nivel: ${jugador.nivel})`);
+        return;
+    }
+
     let slot;
     switch(item.tipo) {
         case 'anillo':
@@ -314,7 +320,12 @@ function aplicarBonificacionesItem(item, action) {
             jugador.statsBase[key] += val * multiplier;
         }
     });
-}
+
+    // Actualizar armadura cuando el item no es un arma
+    if (item.tipo !== 'arma' && item.defensa) {
+        jugador.armadura += item.defensa * multiplier;
+    }
+}    
 
 function desequiparItem(slot) {
     const item = jugador.equipo[slot];
@@ -501,14 +512,13 @@ function actualizarUI() {
     document.getElementById("armadura-value").textContent = jugador.armadura;
     document.getElementById("victorias").textContent = `Victorias: ${jugador.victorias}`;
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
-    document.getElementById("rubies-value").textContent = jugador.rubies; // Mostrar rubíes
+    document.getElementById("rubies-value").textContent = jugador.rubies;
     document.querySelector("button[onclick='comprarCombate()']").disabled = jugador.rubies < 1;
 
     // Calcular daño total
-    let danoMinTotal = 2; // Daño base mínimo
-    let danoMaxTotal = 2; // Daño base máximo
+    let danoMinTotal = 2;
+    let danoMaxTotal = 2;
     
-    // Sumar daño de todas las armas equipadas
     Object.values(jugador.equipo).forEach(item => {
         if (item && item.tipo === 'arma') {
             danoMinTotal += item.danoMin;
@@ -516,13 +526,12 @@ function actualizarUI() {
         }
     });
     
-    // Sumar bonificación por fuerza
     danoMinTotal += jugador.statsBase.fuerza;
     danoMaxTotal += jugador.statsBase.fuerza;
     
     document.getElementById("dano-value").textContent = `${danoMinTotal}-${danoMaxTotal}`;
     
-    // Stats
+    // Stats generales (se mantienen igual)
     document.getElementById("fuerza-value").textContent = jugador.statsBase.fuerza;
     document.getElementById("habilidad-value").textContent = jugador.statsBase.habilidad;
     document.getElementById("agilidad-value").textContent = jugador.statsBase.agilidad;
@@ -530,24 +539,48 @@ function actualizarUI() {
     document.getElementById("carisma-value").textContent = jugador.statsBase.carisma;
     document.getElementById("inteligencia-value").textContent = jugador.statsBase.inteligencia;
     
-    // Entrenamiento
+    // --- NUEVA SECCIÓN DE ENTRENAMIENTO MODIFICADA ---
     document.getElementById("puntos-entrenamiento").textContent = jugador.puntosEntrenamiento;
-    
+
+    // Calcular bonos de items
+    const bonosItems = {
+        fuerza: 0,
+        habilidad: 0,
+        agilidad: 0,
+        constitucion: 0,
+        carisma: 0,
+        inteligencia: 0
+    };
+
+    // Sumar bonos de items equipados
+    Object.values(jugador.equipo).forEach(item => {
+        if (item) {
+            Object.entries(item).forEach(([key, val]) => {
+                if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key)) {
+                    bonosItems[key] += val;
+                }
+            });
+        }
+    });
+
+    // Actualizar UI para cada stat
     const stats = ['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'];
     stats.forEach(stat => {
-        document.getElementById(`${stat}-total`).textContent = jugador.statsBase[stat];
-        document.getElementById(`${stat}-base`).textContent = jugador.statsBase[stat];
-        document.getElementById(`${stat}-max`).textContent = jugador.statsMaximos[stat];
+        const base = jugador.statsBase[stat] - bonosItems[stat]; // Valor base sin items
+        document.getElementById(`${stat}-total`).textContent = jugador.statsBase[stat]; // Total
+        document.getElementById(`${stat}-base`).textContent = base; // Base
+        document.getElementById(`${stat}-item`).textContent = `+${bonosItems[stat]}`; // Bonus items
+        document.getElementById(`${stat}-max`).textContent = jugador.statsMaximos[stat]; // Máximo
     });
+    // --- FIN DE SECCIÓN MODIFICADA ---
     
-    // Actualizar inventario y vestuario
+    // Resto de funciones (se mantienen igual)
     actualizarInventarioUI();
     actualizarVestuarioUI();
     actualizarUbicacionesUI();
     
     localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
 
-    // Verificar si la vida llegó al máximo para detener el temporizador
     if (jugador.vida >= jugador.vidaMax && jugador.intervaloCuracion) {
         clearInterval(jugador.intervaloCuracion);
         document.getElementById("curacion-timer").textContent = "Completo";
