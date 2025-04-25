@@ -689,9 +689,10 @@ button:hover {
 #misiones.activa {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Ocupa todo el espacio disponible */
-    min-height: 0; /* Importante para flexbox */
+    flex: 1;
+    min-height: 0;
     padding: 20px;
+    height: 100%; /* Asegura que ocupe todo el espacio disponible */
 }
 
 #misiones .panel {
@@ -700,7 +701,9 @@ button:hover {
     padding: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     width: 100%;
-    height: 100vh;
+    height: 100%; /* Cambiado de 100vh a 100% */
+    display: flex;
+    flex-direction: column;
 }
 
 #misiones h2 {
@@ -721,6 +724,7 @@ button:hover {
     padding: 10px;
     border-radius: 8px;
     justify-content: center;
+    flex-shrink: 0; /* Evita que se encoja */
 }
 
 .filtros-misiones button {
@@ -743,11 +747,31 @@ button:hover {
     font-weight: bold;
 }
 
-/* Lista de misiones */
+/* Lista de misiones con scroll */
 .lista-misiones {
     flex: 1;
-    overflow-y: auto; /* Scroll solo si es necesario */
-    padding-right: 5px; /* Espacio para el scroll */
+    overflow-y: auto;
+    padding-right: 5px;
+    max-height: calc(100vh - 200px); /* Ajusta según necesidad */
+}
+
+/* Personaliza el scrollbar */
+.lista-misiones::-webkit-scrollbar {
+    width: 8px;
+}
+
+.lista-misiones::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.lista-misiones::-webkit-scrollbar-thumb {
+    background: #e74c3c;
+    border-radius: 4px;
+}
+
+.lista-misiones::-webkit-scrollbar-thumb:hover {
+    background: #c0392b;
 }
 
 /* Cartas de misiones */

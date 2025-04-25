@@ -734,13 +734,33 @@ function usarCombate() {
 
 // --- FUNCIONES DE INTERFAZ ---
 function mostrarSeccion(seccionId) {
+    // Ocultar todas las secciones
     document.querySelectorAll('.seccion').forEach(seccion => {
         seccion.classList.remove('activa');
     });
+    
+    // Mostrar la sección seleccionada
     document.getElementById(seccionId).classList.add('activa');
     
+    // Si la sección es "misiones", activar el filtro "Todas" por defecto
+    if (seccionId === 'misiones') {
+        // Remover la clase "activo" de todos los botones de filtro
+        document.querySelectorAll('.filtros-misiones button').forEach(btn => {
+            btn.classList.remove('activo');
+        });
+        
+        // Activar el botón "Todas"
+        const btnTodas = document.querySelector('.filtros-misiones button[onclick*="filtrarMisiones(\'todas\')"]');
+        if (btnTodas) {
+            btnTodas.classList.add('activo');
+        }
+        
+        // Mostrar todas las misiones
+        actualizarMisionesUI('todas');
+    }
+    
+    // Reiniciar combate si se abre la sección de combate
     if (seccionId === 'combate') {
-        // Al mostrar la sección de combate, reiniciamos el estado
         enCombate = false;
         enemigosActuales = [];
         actualizarEnemigosUI();
