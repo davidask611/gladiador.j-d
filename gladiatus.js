@@ -704,6 +704,7 @@ function atacar(indexEnemigo) {
                 enemigo.derrotado = true;
                 enemigoVivo = false;
                 log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                victoria();
                 break;
             }
         } else {
