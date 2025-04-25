@@ -776,82 +776,77 @@ function victoria() {
     let recompensaOro = 0;
     let recompensaExp = 0;
     let recompensaRubies = 0;
+    let itemsObtenidos = [];
     
-    // Depuración: Mostrar enemigos derrotados
+    // Calcular recompensas de enemigos derrotados
     console.log("Enemigos derrotados:");
     enemigosActuales.forEach(enemigo => {
         if (enemigo.derrotado) {
             console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
             recompensaOro += enemigo.oro;
             recompensaExp += enemigo.exp;
-            // 50% de chance de obtener 1 rubí por enemigo derrotado
             if (Math.random() > 0.5) {
-                recompensaRubies += 1;
+                recompensaRubies += 1; // 50% de chance por rubí
             }
         }
     });
     
+    // Aplicar bonus de carisma al oro
     const bonusCarisma = 1 + (jugador.statsBase.carisma * 0.1);
     const oroFinal = Math.floor(recompensaOro * bonusCarisma);
     
-    // Depuración: Mostrar cálculos
-    console.log(`Oro base: ${recompensaOro}, Bonus carisma: ${bonusCarisma}, Oro final: ${oroFinal}`);
-    console.log(`Experiencia: ${recompensaExp}`);
-    
-    // Asegurarse de que siempre se reciba oro y experiencia
-    const oroAnterior = jugador.oro;
-    const expAnterior = jugador.exp;
-    
+    // Depuración (opcional)
+    console.log(`Oro base: ${recompensaOro} + Bonus carisma (x${bonusCarisma.toFixed(1)}) = ${oroFinal}`);
+    console.log(`Rubíes obtenidos: ${recompensaRubies}`);
+
+    // Aplicar recompensas al jugador
     jugador.oro += oroFinal;
     jugador.exp += recompensaExp;
-    jugador.rubies += recompensaRubies;  // Añadir rubíes obtenidos
+    jugador.rubies += recompensaRubies;
     jugador.victorias++;
-    
-    // Depuración: Verificar cambios
-    console.log(`Oro antes: ${oroAnterior}, después: ${jugador.oro}`);
-    console.log(`Exp antes: ${expAnterior}, después: ${jugador.exp}`);
-    
-    // Actualizar el log con las recompensas
-    let mensaje = document.getElementById("log-combate").textContent;
-    mensaje += `\n\n🎉 ¡Victoria en ${ubicacionActual}! Ganaste ${oroFinal} oro y ${recompensaExp} experiencia.`;
-    
-    if (recompensaRubies > 0) {
-        mensaje += `\n💎 +${recompensaRubies} rubí(es)`;
-    }
 
-    // Aumentado a 50% la probabilidad de obtener un item
+    // Generar ítem (50% de probabilidad - solo una vez)
     if (Math.random() <= 0.5) {
         const nivelZona = ubicaciones[ubicacionActual].niveles[0];
         const nuevoItem = generarItemAleatorio(nivelZona);
         jugador.inventario.push(nuevoItem);
-        mensaje += `\n\n🎁 ¡Has obtenido ${nuevoItem.nombre}!`;
+        itemsObtenidos.push(nuevoItem);
         console.log("Item obtenido:", nuevoItem);
     }
 
-    // 50% de chance de obtener un item (existente)
-    if (Math.random() > 0.5) {
-        const nivelZona = ubicaciones[ubicacionActual].niveles[0];
-        const nuevoItem = generarItemAleatorio(nivelZona);
-        jugador.inventario.push(nuevoItem);
-        mensaje += `\n\n🎁 ¡Has obtenido ${nuevoItem.nombre}!`;
+    // Construir mensaje detallado
+    let mensaje = document.getElementById("log-combate").textContent;
+    mensaje += `\n\n⚔️ **¡VICTORIA EN ${ubicacionActual.toUpperCase()}!** ⚔️\n`;
+    mensaje += `\n▸ 💰 Oro: ${oroFinal} (Bonus carisma: x${bonusCarisma.toFixed(1)})`;
+    mensaje += `\n▸ ✨ Experiencia: ${recompensaExp}`;
+    mensaje += `\n▸ 💎 Rubíes: +${recompensaRubies || "Ninguno"}`;
+    
+    if (itemsObtenidos.length > 0) {
+        mensaje += `\n\n🎁 **¡ITEM OBTENIDO!**`;
+        itemsObtenidos.forEach(item => {
+            mensaje += `\n▸ ${item.nombre} (${item.descripcion})`;
+        });
+    } else {
+        mensaje += `\n\n🔍 No encontraste items esta vez.`;
     }
-    
-    // Asegurarse de que el mensaje se añade al log existente
+
+    // Actualizar UI y finalizar combate
     document.getElementById("log-combate").textContent = mensaje;
-    
     enCombate = false;
     ubicacionActual = "";
     
+    // Verificar subida de nivel
     if (jugador.exp >= jugador.expParaSubir) {
         subirNivel();
     }
     
     actualizarUI();
     
-    // Depuración adicional
-    console.log("Estado final del jugador:", {
+    // Depuración final
+    console.log("Estado del jugador:", {
         oro: jugador.oro,
         exp: jugador.exp,
+        rubies: jugador.rubies,
         victorias: jugador.victorias
     });
 }
