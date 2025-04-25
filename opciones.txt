@@ -1,6 +1,6 @@
 el entrenamiento cambiarlo por coste de oro y el coste de oro se valla duplicando por cada punto puesto.
 
-los puntos de entrenamiento maximos seria infinito
+los puntos de entrenamiento maximos seria infinito ok
 
 moneda nueva Rubi, se puede conseguir en cada batalla tenes un 50% de posibilidad que te caiga 1 rubi. OK
 
