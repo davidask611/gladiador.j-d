@@ -684,7 +684,6 @@ function atacar(indexEnemigo) {
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
     let enemigoVivo = true;
-    let ganoRubies = false; // Variable para rastrear si ganó rubíes
 
     // Batalla automática hasta que alguien muera
     while (jugadorVivo && enemigoVivo) {
@@ -700,16 +699,8 @@ function atacar(indexEnemigo) {
                 enemigo.derrotado = true;
                 enemigoVivo = false;
                 
-                // Verificar si ganó rubíes (50% de probabilidad)
-                if (Math.random() > 0.5) {
-                    ganoRubies = true;
-                    jugador.rubies += 1; // Añadir rubí al jugador
-                    log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
-                    log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp} | 💎 Rubí: +1\n`; // Mensaje inmediato
-                } else {
-                    log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
-                    log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
-                }
+                log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
                 
                 victoria(); // Esto mostrará el resumen completo después
                 break;
@@ -788,7 +779,6 @@ function huir() {
 function victoria() {
     let recompensaOro = 0;
     let recompensaExp = 0;
-    let recompensaRubies = 0;
     let itemsObtenidos = [];
     
     // Calcular recompensas de enemigos derrotados
@@ -798,9 +788,6 @@ function victoria() {
             console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
             recompensaOro += enemigo.oro;
             recompensaExp += enemigo.exp;
-            if (Math.random() > 0.5) {
-                recompensaRubies += 1; // 50% de chance por rubí
-            }
         }
     });
     
@@ -810,16 +797,14 @@ function victoria() {
     
     // Depuración (opcional)
     console.log(`Oro base: ${recompensaOro} + Bonus carisma (x${bonusCarisma.toFixed(1)}) = ${oroFinal}`);
-    console.log(`Rubíes obtenidos: ${recompensaRubies}`);
 
     // Aplicar recompensas al jugador
     jugador.oro += oroFinal;
     jugador.exp += recompensaExp;
-    jugador.rubies += recompensaRubies;
     jugador.victorias++;
 
-    // Generar ítem (50% de probabilidad - solo una vez)
-    if (Math.random() <= 0.5) {
+    // Generar ítem (20% de probabilidad - solo una vez)
+    if (Math.random() <= 0.2) {
         const nivelZona = ubicaciones[ubicacionActual].niveles[0];
         const nuevoItem = generarItemAleatorio(nivelZona);
         jugador.inventario.push(nuevoItem);
@@ -832,7 +817,6 @@ function victoria() {
     mensaje += `\n\n⚔️ **¡VICTORIA EN ${ubicacionActual.toUpperCase()}!** ⚔️\n`;
     mensaje += `\n▸ 💰 Oro: ${oroFinal} (Bonus carisma: x${bonusCarisma.toFixed(1)})`;
     mensaje += `\n▸ ✨ Experiencia: ${recompensaExp}`;
-    mensaje += `\n▸ 💎 Rubíes: +${recompensaRubies || "Ninguno"}`;
     
     if (itemsObtenidos.length > 0) {
         mensaje += `\n\n🎁 **¡ITEM OBTENIDO!**`;
@@ -910,16 +894,16 @@ function iniciarCuracion() {
 }
 
 function canjearVictorias() {
-    if (jugador.victorias >= 5) {
-        const confirmar = confirm("¿Deseas canjear 5 victorias por 1 rubí?");
+    if (jugador.victorias >= 10) {
+        const confirmar = confirm("¿Deseas canjear 10 victorias por 1 rubí?");
         if (confirmar) {
-            jugador.victorias -= 5;
+            jugador.victorias -= 10;
             jugador.rubies += 1;
             actualizarUI();
             alert("¡Canje exitoso! Has obtenido 1 rubí.");
         }
     } else {
-        alert("Necesitas al menos 5 victorias para canjear por 1 rubí.");
+        alert("Necesitas al menos 10 victorias para canjear por 1 rubí.");
     }
 }
 
@@ -1030,15 +1014,15 @@ function comprarCombate() {
 
 // --- INICIALIZACIÓN ---
 function cargarJuego() {
-    const datosGuardados = localStorage.getItem('gladiatusSave');
-    if (datosGuardados) {
-        const datos = JSON.parse(datosGuardados);
-        Object.assign(jugador, datos);
-        // Inicializar rubíes si no existen en los datos guardados
-        if (jugador.rubies === undefined) {
-            jugador.rubies = 0;
-        }
-    }
+    // const datosGuardados = localStorage.getItem('gladiatusSave');
+    // if (datosGuardados) {
+    //     const datos = JSON.parse(datosGuardados);
+    //     Object.assign(jugador, datos);
+    //     // Inicializar rubíes si no existen en los datos guardados
+    //     if (jugador.rubies === undefined) {
+    //         jugador.rubies = 0;
+    //     }
+    // }
 
     // Iniciar el sistema de curación
     iniciarCuracion();
@@ -1081,6 +1065,6 @@ function cargarJuego() {
 }
 
 window.addEventListener('load', cargarJuego);
-window.addEventListener('beforeunload', () => {
-    localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
-});
+// window.addEventListener('beforeunload', () => {
+//     localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
+// });
