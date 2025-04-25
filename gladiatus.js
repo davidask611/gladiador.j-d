@@ -966,10 +966,16 @@ function atacar(indexEnemigo) {
         return;
     }
 
+    // Descontar combate al inicio para evitar problemas
+    if (!usarCombate()) {
+        return;
+    }
+
     const enemigo = enemigosActuales[indexEnemigo];
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
     let enemigoVivo = true;
+    let recibioDaño = false;
 
     // Batalla automática hasta que alguien muera
     while (jugadorVivo && enemigoVivo) {
@@ -988,7 +994,7 @@ function atacar(indexEnemigo) {
                 log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
                 log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
                 
-                victoria(); // Esto mostrará el resumen completo después
+                victoria();
                 break;
             }
         } else {
@@ -1001,6 +1007,7 @@ function atacar(indexEnemigo) {
             if (Math.random() * 100 > evasion) {
                 const dañoEnemigo = Math.max(1, enemigo.ataque - jugador.armadura);
                 jugador.vida -= dañoEnemigo;
+                recibioDaño = true;
                 log += `🛡️ ${enemigo.nombre} te contraataca (-${dañoEnemigo} vida).\n`;
                 
                 if (jugador.vida <= 0) {
@@ -1020,18 +1027,14 @@ function atacar(indexEnemigo) {
     actualizarEnemigosUI();
     actualizarUI();
 
-    // Descontar combate solo al finalizar la batalla
-    if (!jugadorVivo || !enemigoVivo) {
-        usarCombate();
-    }
-
     // Verificar victoria/derrota global
     if (enemigosActuales.every(e => e.derrotado)) {
-        victoria(); // Muestra el resumen completo de la ubicación
+        victoria();
     } else if (!jugadorVivo) {
         derrota();
     }
-    verificarCuracionAutomatica(); // <-- Añadir esta línea
+    
+    verificarCuracionAutomatica();
     actualizarUI();
 }
 
@@ -1468,7 +1471,13 @@ function reclamarRecompensa(id) {
 
     // Dar recompensas
     if (mision.recompensa.oro) jugador.oro += mision.recompensa.oro;
-    if (mision.recompensa.exp) jugador.exp += mision.recompensa.exp;
+    if (mision.recompensa.exp) {
+        jugador.exp += mision.recompensa.exp;
+        // Verificar si sube de nivel después de recibir la exp
+        if (jugador.exp >= jugador.expParaSubir) {
+            subirNivel();
+        }
+    }
     if (mision.recompensa.rubies) jugador.rubies += mision.recompensa.rubies;
     if (mision.recompensa.item) {
         const item = generarItemAleatorio(jugador.nivel);
