@@ -10,7 +10,6 @@ const jugador = {
     rubies: 0,  // Nueva propiedad
     victorias: 0,
     familia: "Sin clan",
-    puntosEntrenamiento: 0,
     danoMin: 2,  // Cambiado a daño mínimo base
     danoMax: 2,  // Cambiado a daño máximo base
     armadura: 0,
@@ -54,7 +53,24 @@ const jugador = {
         pendiente: null
     },
     
-    inventario: []
+    inventario: [],
+
+    mejorasStats: { // Contador de mejoras por stat
+        fuerza: 0,
+        habilidad: 0,
+        agilidad: 0,
+        constitucion: 0,
+        carisma: 0,
+        inteligencia: 0
+    },
+    costosEntrenamiento: { // Costos base (primera mejora)
+        fuerza: 50,
+        habilidad: 50,
+        agilidad: 25,
+        constitucion: 25,
+        carisma: 50,
+        inteligencia: 50
+    }
 };
 
 // Tipos de items y sus imágenes
@@ -514,6 +530,7 @@ function actualizarUI() {
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
     document.getElementById("rubies-value").textContent = jugador.rubies;
     document.querySelector("button[onclick='comprarCombate()']").disabled = jugador.rubies < 1;
+    document.getElementById("oro-entrenamiento-value").textContent = jugador.oro;
 
     // Calcular daño total
     let danoMinTotal = 2;
@@ -540,8 +557,7 @@ function actualizarUI() {
     document.getElementById("inteligencia-value").textContent = jugador.statsBase.inteligencia;
     
     // --- NUEVA SECCIÓN DE ENTRENAMIENTO MODIFICADA ---
-    document.getElementById("puntos-entrenamiento").textContent = jugador.puntosEntrenamiento;
-
+  
     // Calcular bonos de items
     const bonosItems = {
         fuerza: 0,
@@ -999,29 +1015,65 @@ function subirNivel() {
 }
 
 function mejorarStat(stat) {
-    if (jugador.puntosEntrenamiento <= 0) {
-        alert("¡No tienes puntos de entrenamiento!");
+    const mejorasActuales = jugador.mejorasStats[stat];
+    const costoBase = jugador.costosEntrenamiento[stat];
+    const costo = costoBase + (mejorasActuales * costoBase); // Ej: 25, 50, 75... o 50, 100, 150...
+    
+    if (jugador.oro < costo) {
+        alert(`Necesitas ${costo} oro (tienes ${jugador.oro})`);
         return;
     }
     
     if (jugador.statsBase[stat] >= jugador.statsMaximos[stat]) {
-        alert(`¡Ya alcanzaste el máximo (${jugador.statsMaximos[stat]}) para este nivel!`);
+        alert(`¡Máximo alcanzado (${jugador.statsMaximos[stat]})!`);
         return;
     }
     
+    // Aplicar la mejora
     jugador.statsBase[stat]++;
-    jugador.puntosEntrenamiento--;
+    jugador.mejorasStats[stat]++;
+    jugador.oro -= costo;
     
-    switch(stat) {
-        case 'constitucion':
-            const vidaExtra = 5;
-            jugador.vidaMax += vidaExtra;
-            jugador.vida += vidaExtra;
-            break;
+    // Bonus de constitución
+    if (stat === 'constitucion') {
+        const vidaExtra = 5;
+        jugador.vidaMax += vidaExtra;
+        jugador.vida += vidaExtra;
     }
     
+    // Actualizar el botón con el NUEVO costo (importante: mejorasActuales + 1)
+    const proximoCosto = costoBase + ((mejorasActuales + 1) * costoBase);
+    actualizarBotonStat(stat, proximoCosto); // <-- Esta línea es clave
+    
     actualizarUI();
-    verificarCuracionAutomatica(); // <-- Añadir esta línea
+    verificarCuracionAutomatica();
+}
+
+function actualizarBotonStat(stat, costo) {
+    // Textos que identifican cada botón (deben coincidir exactamente con el HTML)
+    const textosStats = {
+        fuerza: "💪 Fuerza",
+        habilidad: "🎯 Habilidad",
+        agilidad: "🏃 Agilidad",
+        constitucion: "❤️ Constitución",
+        carisma: "✨ Carisma",
+        inteligencia: "🧠 Inteligencia"
+    };
+
+    // Encontrar el botón CORRECTO usando el texto del stat
+    const botones = document.querySelectorAll('.stat-card button');
+    botones.forEach(boton => {
+        if (boton.textContent.includes(textosStats[stat])) {
+            // Actualizar el texto del botón (usamos innerHTML solo si necesitas el <small>)
+            boton.innerHTML = `+${costo} oro <small>(1 Punto)</small>`;
+            
+            // Asegurarnos de que el evento onclick esté correctamente asignado
+            boton.onclick = function() { mejorarStat(stat); };
+            
+            // Agregar atributo data-stat para referencia futura
+            boton.setAttribute('data-stat', stat);
+        }
+    });
 }
 
 function comprarCombate() {
@@ -1095,6 +1147,13 @@ function cargarJuego() {
     actualizarUI();
     actualizarCombatesUI();
     verificarCuracionAutomatica();
+
+    // Actualizar botones de entrenamiento al inicio
+    Object.keys(jugador.mejorasStats).forEach(stat => {
+        const costoBase = jugador.costosEntrenamiento[stat];
+        const proximoCosto = costoBase + (jugador.mejorasStats[stat] * costoBase); // Usar costoBase en lugar de 50
+        actualizarBotonStat(stat, proximoCosto);
+    });
 }
 
 window.addEventListener('load', cargarJuego);

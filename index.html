@@ -179,7 +179,7 @@
         <div id="entrenamiento" class="seccion">
             <div class="panel">
                 <h2>🏋️ Área de Entrenamiento</h2>
-                <p>Puntos disponibles: <span id="puntos-entrenamiento">0</span></p>
+                <p>Oro Disponibles: <span id="oro-entrenamiento-value">50</span></p>
                 
                 <!-- Fuerza -->
                 <div class="stat-card">
@@ -193,7 +193,7 @@
                         </p>
                     </div>
                     <p class="stat-desc">Aumenta daño (+1 por punto) y bloqueo de golpes</p>
-                    <button onclick="mejorarStat('fuerza')">+1 (1 Punto)</button>
+                    <button onclick="mejorarStat('fuerza', this)" data-stat="fuerza">💪 Fuerza +50 oro <small>(1 Punto)</small></button>
                 </div>
                 
                 <!-- Habilidad -->
@@ -208,7 +208,7 @@
                         </p>
                     </div>
                     <p class="stat-desc">Aumenta precisión (+5% por punto) y golpes críticos</p>
-                    <button onclick="mejorarStat('habilidad')">+1 (1 Punto)</button>
+                    <button onclick="mejorarStat('habilidad', this)" data-stat="habilidad">🎯 habilidad +50 oro <small>(1 Punto)</small></button>
                 </div>
                 
                 <!-- Agilidad -->
@@ -223,7 +223,7 @@
                         </p>
                     </div>
                     <p class="stat-desc">Aumenta esquivar (+3% por punto) y chance de huida</p>
-                    <button onclick="mejorarStat('agilidad')">+1 (1 Punto)</button>
+                    <button onclick="mejorarStat('agilidad', this)" data-stat="agilidad">🏃 Agilidad +25 oro <small>(1 Punto)</small></button>
                 </div>
                 
                 <!-- Constitución -->
@@ -238,7 +238,7 @@
                         </p>
                     </div>
                     <p class="stat-desc">Aumenta vida máxima (+5 por punto) y regeneración</p>
-                    <button onclick="mejorarStat('constitucion')">+1 (1 Punto)</button>
+                    <button onclick="mejorarStat('constitucion', this)" data-stat="constitucion">❤️ constitucion +25 oro <small>(1 Punto)</small></button>
                 </div>
                 
                 <!-- Carisma -->
@@ -253,7 +253,7 @@
                         </p>
                     </div>
                     <p class="stat-desc">Mejora recompensas (+10% por punto) y doble ataque</p>
-                    <button onclick="mejorarStat('carisma')">+1 (1 Punto)</button>
+                    <button onclick="mejorarStat('carisma', this)" data-stat="carisma">✨ carisma +50 oro <small>(1 Punto)</small></button>
                 </div>
                 
                 <!-- Inteligencia -->
@@ -268,7 +268,7 @@
                         </p>
                     </div>
                     <p class="stat-desc">Aumenta curación (+2 por punto) y aprendizaje</p>
-                    <button onclick="mejorarStat('inteligencia')">+1 (1 Punto)</button>
+                    <button onclick="mejorarStat('inteligencia', this)" data-stat="inteligencia">🧠 inteligencia +50 oro <small>(1 Punto)</small></button>
                 </div>
             </div>
         </div>
