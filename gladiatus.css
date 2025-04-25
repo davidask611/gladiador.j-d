@@ -811,3 +811,13 @@ button:hover {
         width: 100%;
     }
 }
+
+.completada-flash {
+    animation: flash 0.5s 3;
+}
+
+@keyframes flash {
+    0% { background: rgba(46, 204, 113, 0.1); }
+    50% { background: rgba(46, 204, 113, 0.4); }
+    100% { background: rgba(46, 204, 113, 0.1); }
+}

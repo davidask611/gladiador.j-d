@@ -75,9 +75,10 @@ const jugador = {
 
 const misiones = {
     diarias: [
+        // Misiones básicas de combate
         {
             id: 1,
-            titulo: "Cazador novato",
+            titulo: "Cazador Novato",
             descripcion: "Derrota 3 enemigos en cualquier ubicación.",
             tipo: "diaria",
             progreso: 0,
@@ -87,24 +88,213 @@ const misiones = {
         },
         {
             id: 2,
-            titulo: "Entrenamiento intenso",
+            titulo: "Matador de Bestias",
+            descripcion: "Derrota 5 enemigos de tipo animal (ratas, lobos, osos).",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 5,
+            recompensa: { oro: 80, exp: 40 },
+            completada: false
+        },
+        // Misiones de equipo
+        {
+            id: 3,
+            titulo: "Equipamiento Básico",
+            descripcion: "Equipa 3 items diferentes (arma, armadura y accesorio).",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 3,
+            recompensa: { oro: 60, rubies: 1 },
+            completada: false
+        },
+        {
+            id: 4,
+            titulo: "Coleccionista",
+            descripcion: "Consigue 2 nuevos items en tu inventario.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 2,
+            recompensa: { oro: 70, exp: 30 },
+            completada: false
+        },
+        // Misiones de atributos
+        {
+            id: 5,
+            titulo: "Entrenamiento Intensivo",
             descripcion: "Mejora cualquier atributo 2 veces.",
             tipo: "diaria",
             progreso: 0,
             requerido: 2,
             recompensa: { oro: 30, rubies: 1 },
             completada: false
+        },
+        {
+            id: 6,
+            titulo: "Especialización",
+            descripcion: "Mejora un mismo atributo 3 veces.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 3,
+            recompensa: { oro: 100, exp: 50 },
+            completada: false
+        },
+        // Misiones de recursos
+        {
+            id: 7,
+            titulo: "Ahorrador",
+            descripcion: "Consigue 200 de oro.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 200,
+            recompensa: { exp: 50, rubies: 1 },
+            completada: false
+        },
+        {
+            id: 8,
+            titulo: "Canje de Victorias",
+            descripcion: "Canjea victorias por rubíes 1 vez.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 1,
+            recompensa: { oro: 100, exp: 30 },
+            completada: false
+        },
+        // Misiones de exploración
+        {
+            id: 9,
+            titulo: "Explorador",
+            descripcion: "Visita 2 ubicaciones diferentes.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 2,
+            recompensa: { oro: 50, exp: 40 },
+            completada: false
+        },
+        {
+            id: 10,
+            titulo: "Conquistador",
+            descripcion: "Derrota al menos 1 enemigo en 3 ubicaciones diferentes.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 3,
+            recompensa: { oro: 120, rubies: 2 },
+            completada: false
         }
     ],
     historia: [
+        // Misiones de progresión inicial
         {
-            id: 3,
-            titulo: "Primeros pasos",
+            id: 11,
+            titulo: "Primeros Pasos",
             descripcion: "Alcanza el nivel 5.",
             tipo: "historia",
             progreso: 0,
             requerido: 5,
-            recompensa: { oro: 100, exp: 50, item: "arma" },
+            recompensa: { 
+                oro: 100, 
+                exp: 50, 
+                item: {
+                    tipo: "arma",
+                    nivelMin: 5,
+                    nivelMax: 20,
+                    rareza: "común" // Puede ser "común", "raro", "épico", etc.
+                }
+            },
+            completada: false
+        },
+        {
+            id: 12,
+            titulo: "Forjando Leyenda",
+            descripcion: "Alcanza el nivel 10.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 10,
+            recompensa: { oro: 250, exp: 100, rubies: 2 },
+            completada: false
+        },
+
+        // Misiones de combate épico (con recompensa de armadura ajustada)
+        {
+            id: 13,
+            titulo: "Cazador de Bestias",
+            descripcion: "Derrota 20 enemigos de cualquier tipo.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 20,
+            recompensa: { 
+                oro: 200, 
+                exp: 80, 
+                item: {
+                    tipo: "armadura",
+                    nivelMin: 5,
+                    nivelMax: 20,
+                    rareza: "raro" // Recompensa mejorada para misiones más difíciles
+                }
+            },
+            completada: false
+        },
+
+        {
+            id: 14,
+            titulo: "Reto del Guerrero",
+            descripcion: "Derrota 3 enemigos sin recibir daño.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 3,
+            recompensa: { oro: 150, rubies: 3 },
+            completada: false
+        },
+        // Misiones de equipo
+        {
+            id: 15,
+            titulo: "Equipo Legendario",
+            descripcion: "Equipa 5 items de nivel 10 o superior.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 5,
+            recompensa: { oro: 300, exp: 120 },
+            completada: false
+        },
+        {
+            id: 16,
+            titulo: "Maestro de Armas",
+            descripcion: "Consigue un arma con al menos 10 de daño máximo.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 1,
+            recompensa: { exp: 150, rubies: 5 },
+            completada: false
+        },
+
+        // Misiones de atributos (con recompensa de accesorio ajustada)
+        {
+            id: 17,
+            titulo: "Perfeccionamiento",
+            descripcion: "Lleva un atributo a 20 puntos.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 20,
+            recompensa: { 
+                oro: 200, 
+                exp: 100, 
+                item: {
+                    tipo: "accesorio",
+                    nivelMin: 5,
+                    nivelMax: 20,
+                    rareza: "épico" // Recompensa de alta calidad
+                }
+            },
+            completada: false
+        },
+
+        {
+            id: 18,
+            titulo: "Equilibrio Interior",
+            descripcion: "Ten al menos 10 puntos en 3 atributos diferentes.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 3,
+            recompensa: { oro: 180, rubies: 3 },
             completada: false
         }
     ]
@@ -371,6 +561,7 @@ function equiparItem(itemId) {
     // Aplicar bonificaciones
     aplicarBonificacionesItem(jugador.equipo[slot], 'add');
     actualizarUI();
+    actualizarProgresoMisiones('equiparItem', 1);
 }
 
 // Función auxiliar para aplicar/remover bonificaciones
@@ -729,7 +920,8 @@ const enemigosEscalados = enemigosUbicacion.map(enemigo => {
         document.getElementById("log-combate").textContent = 
             `Explorando ${nombreUbicacion} (Nivel ${ubicacion.niveles[0]}-${ubicacion.niveles[1]})... ¡Selecciona un enemigo para atacar!`;
         actualizarCombatesUI();
-        }
+        actualizarProgresoMisiones('visitarUbicacion', 1);
+}
 
 function actualizarEnemigosUI() {
     const grid = document.getElementById("enemigos-grid");
@@ -896,7 +1088,6 @@ function victoria() {
     jugador.oro += oroFinal;
     jugador.exp += recompensaExp;
     jugador.victorias++;
-    actualizarProgresoMisiones('enemigo');
 
     // Generar ítem (20% de probabilidad - solo una vez)
     if (Math.random() <= 0.2) {
@@ -941,6 +1132,16 @@ function victoria() {
         rubies: jugador.rubies,
         victorias: jugador.victorias
     });
+
+    actualizarProgresoMisiones('enemigo', 1); // Contar enemigos derrotados
+    if (!recibioDaño) {
+        actualizarProgresoMisiones('enemigoSinDaño', 1); // Para misiones de "sin recibir daño"
+    }
+
+    if (itemsObtenidos.length > 0) {
+        actualizarProgresoMisiones('conseguirItem', itemsObtenidos.length);
+        actualizarProgresoMisiones('conseguirOro');
+    }
 }
 
 function derrota() {
@@ -1006,6 +1207,7 @@ function canjearVictorias() {
 function verificarCuracionAutomatica() {
     if (jugador.vida < jugador.vidaMax && !jugador.intervaloCuracion) {
         iniciarCuracion();
+        actualizarProgresoMisiones('canjearVictorias', 1);
     }
 }
 
@@ -1059,6 +1261,7 @@ function subirNivel() {
     // Modificar el mensaje de alerta para eliminar la referencia a puntos de entrenamiento
     alert(`¡Subiste al nivel ${jugador.nivel}! +${20 + (jugador.statsBase.constitucion * 2)} de vida máxima.`);
     actualizarUI();
+    actualizarProgresoMisiones('nivel');
 }
 
 function mejorarStat(stat) {
@@ -1094,6 +1297,7 @@ function mejorarStat(stat) {
     
     actualizarUI();
     verificarCuracionAutomatica();
+    actualizarProgresoMisiones('mejorarStat', 1, stat);
 }
 
 function actualizarBotonStat(stat, costo) {
@@ -1177,7 +1381,6 @@ function cargarJuego() {
     actualizarUI();
     actualizarCombatesUI();
     verificarCuracionAutomatica();
-    actualizarMisionesUI('todas');
 
     // Actualizar botones de entrenamiento al inicio
     Object.keys(jugador.mejorasStats).forEach(stat => {
@@ -1185,19 +1388,32 @@ function cargarJuego() {
         const proximoCosto = costoBase + (jugador.mejorasStats[stat] * costoBase); // Usar costoBase en lugar de 50
         actualizarBotonStat(stat, proximoCosto);
     });
-}
 
+    reiniciarMisiones(); // <-- Reemplazar reiniciarMisionesDiarias() por esto
+    actualizarMisionesUI('todas');
+}
 function actualizarMisionesUI(filtro = 'todas') {
     const lista = document.getElementById("lista-misiones");
     lista.innerHTML = "";
 
     let misionesMostrar = [];
-    if (filtro === 'diarias') misionesMostrar = [...jugador.misiones.diarias];
-    else if (filtro === 'historia') misionesMostrar = [...jugador.misiones.historia];
-    else misionesMostrar = [...jugador.misiones.diarias, ...jugador.misiones.historia];
+    if (filtro === 'diarias') {
+        misionesMostrar = [...jugador.misiones.diarias];
+    } else if (filtro === 'historia') {
+        // Mostrar misiones de historia no reclamadas
+        misionesMostrar = jugador.misiones.historia.filter(m => !m.reclamada);
+    } else {
+        misionesMostrar = [...jugador.misiones.diarias, ...jugador.misiones.historia.filter(m => !m.reclamada)];
+    }
 
     if (misionesMostrar.length === 0) {
-        lista.innerHTML = "<p>No hay misiones disponibles.</p>";
+        lista.innerHTML = `
+            <div class="sin-misiones">
+                <img src="img/misiones-vacias.png" alt="No hay misiones">
+                <p>No hay misiones disponibles</p>
+                ${filtro === 'diarias' ? '<small>Las misiones diarias se reinician cada 24 horas</small>' : ''}
+            </div>
+        `;
         return;
     }
 
@@ -1205,20 +1421,32 @@ function actualizarMisionesUI(filtro = 'todas') {
         const porcentaje = Math.min(100, (mision.progreso / mision.requerido) * 100);
         const card = document.createElement("div");
         card.className = `mision-card ${mision.completada ? 'completada' : ''}`;
+        card.id = `mision-${mision.id}`;
+        
+        // Destacar recompensas importantes
+        const recompensaHTML = `
+            <div class="recompensas">
+                ${mision.recompensa.oro ? `<span class="recompensa oro">💰 ${mision.recompensa.oro}</span>` : ''}
+                ${mision.recompensa.exp ? `<span class="recompensa exp">✨ ${mision.recompensa.exp}</span>` : ''}
+                ${mision.recompensa.rubies ? `<span class="recompensa rubi">💎 ${mision.recompensa.rubies}</span>` : ''}
+                ${mision.recompensa.item ? `<span class="recompensa item">🎁 Item especial</span>` : ''}
+            </div>
+        `;
+
         card.innerHTML = `
-            <h3>${mision.titulo}</h3>
-            <p>${mision.descripcion}</p>
+            <div class="mision-header">
+                <h3>${mision.titulo}</h3>
+                <span class="mision-tipo ${mision.tipo}">${mision.tipo === 'diaria' ? 'Diaria' : 'Historia'}</span>
+            </div>
+            <p class="mision-desc">${mision.descripcion}</p>
             <div class="mision-progreso">
                 <div style="width: ${porcentaje}%"></div>
+                <span>${mision.progreso}/${mision.requerido}</span>
             </div>
-            <p>Progreso: ${mision.progreso}/${mision.requerido}</p>
-            <div class="mision-recompensa">
-                Recompensa: 
-                ${mision.recompensa.oro ? `<span>💰 ${mision.recompensa.oro} oro</span>` : ''}
-                ${mision.recompensa.exp ? `<span>✨ ${mision.recompensa.exp} exp</span>` : ''}
-                ${mision.recompensa.rubies ? `<span>💎 ${mision.recompensa.rubies} rubí</span>` : ''}
-            </div>
-            ${mision.completada ? '<button class="btn-reclamar" onclick="reclamarRecompensa(' + mision.id + ')">Reclamar</button>' : ''}
+            ${recompensaHTML}
+            ${mision.completada ? 
+                '<button class="btn-reclamar" onclick="reclamarRecompensa(' + mision.id + ')">Reclamar Recompensa</button>' : 
+                ''}
         `;
         lista.appendChild(card);
     });
@@ -1247,34 +1475,170 @@ function reclamarRecompensa(id) {
         jugador.inventario.push(item);
     }
 
-    // Eliminar misión (si es diaria)
+    // Eliminar misión diaria o marcar historia como completada (no se elimina)
     if (mision.tipo === 'diaria') {
         jugador.misiones.diarias = jugador.misiones.diarias.filter(m => m.id !== id);
+    } else {
+        // Para misiones de historia, las marcamos como "reclamadas" pero no las eliminamos
+        mision.reclamada = true;
     }
 
-    actualizarUI();
+    if (jugador.inventario.length >= MAX_INVENTARIO) {
+        alert("¡Inventario lleno! No puedes recibir más items.");
+        return;
+    }
+
     actualizarMisionesUI(document.querySelector(".filtros-misiones button.activo").textContent.toLowerCase());
+    actualizarUI();
+}
+
+function reiniciarMisiones() {
+    const ahora = new Date();
+    const ultimoReinicioDiarias = localStorage.getItem('ultimoReinicioDiarias');
+    const ultimoReinicioHistoria = localStorage.getItem('ultimoReinicioHistoria');
+
+    // Reiniciar misiones diarias cada 24 horas
+    if (!ultimoReinicioDiarias || ahora - new Date(ultimoReinicioDiarias) >= 86400000) {
+        jugador.misiones.diarias = JSON.parse(JSON.stringify(misiones.diarias));
+        localStorage.setItem('ultimoReinicioDiarias', ahora.toString());
+    }
+
+    // Reiniciar misiones de historia cada 7 días (604800000 ms)
+    if (!ultimoReinicioHistoria || ahora - new Date(ultimoReinicioHistoria) >= 604800000) {
+        jugador.misiones.historia = JSON.parse(JSON.stringify(misiones.historia));
+        localStorage.setItem('ultimoReinicioHistoria', ahora.toString());
+    }
+}
+
+function completarMision(mision) {
+    if (mision.progreso >= mision.requerido && !mision.completada) {
+        mision.completada = true;
+        // Efecto visual
+        document.getElementById(`mision-${mision.id}`).classList.add('completada-flash');
+        setTimeout(() => {
+            document.getElementById(`mision-${mision.id}`).classList.remove('completada-flash');
+        }, 1000);
+        // Notificación
+        alert(`¡Misión "${mision.titulo}" completada!`);
+    }
 }
 
 // --- Funciones para actualizar progreso ---
-function actualizarProgresoMisiones(tipo, cantidad = 1) {
-    let misionesActualizables = [];
-    if (tipo === 'enemigo') {
-        misionesActualizables = jugador.misiones.diarias.filter(m => 
-            m.descripcion.includes("Derrota") && !m.completada
-        );
-    } else if (tipo === 'nivel') {
-        misionesActualizables = jugador.misiones.historia.filter(m => 
-            m.descripcion.includes("Alcanza") && !m.completada
-        );
-    }
+function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion = null) {
+    const todasMisiones = [...jugador.misiones.diarias, ...jugador.misiones.historia];
 
-    misionesActualizables.forEach(mision => {
-        mision.progreso += cantidad;
+    todasMisiones.forEach(mision => {
+        if (mision.completada) return;
+
+        // Misiones de derrotar enemigos (genéricas o por tipo)
+        if (tipo === 'enemigo') {
+            if (mision.descripcion.includes("Derrota") && !mision.descripcion.includes("sin recibir daño")) {
+                mision.progreso += cantidad;
+            }
+        }
+
+        // Misiones de derrotar enemigos sin recibir daño
+        if (tipo === 'enemigoSinDaño') {
+            if (mision.descripcion.includes("sin recibir daño")) {
+                mision.progreso += cantidad;
+            }
+        }
+
+        // Misiones de equipar items
+        if (tipo === 'equiparItem') {
+            if (mision.descripcion.includes("Equipa")) {
+                mision.progreso += cantidad;
+            }
+        }
+
+        // Misiones de conseguir items
+        if (tipo === 'conseguirItem') {
+            if (mision.descripcion.includes("Consigue") && mision.descripcion.includes("items")) {
+                mision.progreso += cantidad;
+            }
+        }
+
+        // Misiones de subir de nivel
+        if (tipo === 'nivel') {
+            if (mision.descripcion.includes("Alcanza el nivel")) {
+                mision.progreso = Math.max(mision.progreso, jugador.nivel);
+            }
+        }
+
+        // Misiones de mejorar atributos
+        if (tipo === 'mejorarStat') {
+            // Misión: "Mejora cualquier atributo X veces"
+            if (mision.descripcion.includes("Mejora cualquier atributo")) {
+                mision.progreso += cantidad;
+            }
+            // Misión: "Mejora un mismo atributo X veces"
+            else if (mision.descripcion.includes("Mejora un mismo atributo")) {
+                if (!mision.ultimoStat) mision.ultimoStat = stat;
+                if (mision.ultimoStat === stat) {
+                    mision.progreso += cantidad;
+                } else {
+                    mision.progreso = 1; // Reiniciar si cambia de stat
+                    mision.ultimoStat = stat;
+                }
+            }
+            // Misión: "Lleva un atributo a X puntos"
+            else if (mision.descripcion.includes("Lleva un atributo a")) {
+                mision.progreso = Math.max(mision.progreso, jugador.statsBase[stat]);
+            }
+        }
+
+        // Misiones de visitar ubicaciones
+        if (tipo === 'visitarUbicacion') {
+            if (mision.descripcion.includes("Visita") || mision.descripcion.includes("ubicaciones")) {
+                mision.progreso += cantidad;
+            }
+        }
+
+        // Misiones de conseguir oro
+        if (tipo === 'conseguirOro') {
+            if (mision.descripcion.includes("Consigue") && mision.descripcion.includes("oro")) {
+                mision.progreso = Math.max(mision.progreso, jugador.oro);
+            }
+        }
+
+        // Misiones de canjear victorias
+        if (tipo === 'canjearVictorias') {
+            if (mision.descripcion.includes("Canjea victorias")) {
+                mision.progreso += cantidad;
+            }
+        }
+
+        // Verificar si la misión se completó
         if (mision.progreso >= mision.requerido) {
             mision.completada = true;
+            const card = document.querySelector(`#mision-${mision.id}`);
+            if (card) card.classList.add('completada-flash');
         }
     });
+
+    // Actualizar la UI de misiones si estamos en esa sección
+    if (document.getElementById('misiones').classList.contains('activa')) {
+        const filtroActivo = document.querySelector('.filtros-misiones button.activo')?.textContent.toLowerCase() || 'todas';
+        actualizarMisionesUI(filtroActivo);
+    }
+
+    // Actualizar toda la UI para reflejar cambios (oro, exp, etc.)
+    actualizarUI();
+}
+
+function generarItem(recompensa) {
+    if (recompensa.item) {
+        const nivelItem = Math.floor(
+            Math.random() * (recompensa.item.nivelMax - recompensa.item.nivelMin + 1)
+        ) + recompensa.item.nivelMin;
+        
+        return {
+            tipo: recompensa.item.tipo,
+            nivel: nivelItem,
+            rareza: recompensa.item.rareza || "común"
+        };
+    }
+    return null;
 }
 
 window.addEventListener('load', cargarJuego);
