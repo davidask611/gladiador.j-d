@@ -1097,30 +1097,13 @@ function mejorarStat(stat) {
 }
 
 function actualizarBotonStat(stat, costo) {
-    // Textos que identifican cada botón (deben coincidir exactamente con el HTML)
-    const textosStats = {
-        fuerza: "💪 Fuerza",
-        habilidad: "🎯 Habilidad",
-        agilidad: "🏃 Agilidad",
-        constitucion: "❤️ Constitución",
-        carisma: "✨ Carisma",
-        inteligencia: "🧠 Inteligencia"
-    };
-
-    // Encontrar el botón CORRECTO usando el texto del stat
-    const botones = document.querySelectorAll('.stat-card button');
-    botones.forEach(boton => {
-        if (boton.textContent.includes(textosStats[stat])) {
-            // Actualizar el texto del botón (usamos innerHTML solo si necesitas el <small>)
-            boton.innerHTML = `+${costo} oro <small>(1 Punto)</small>`;
-            
-            // Asegurarnos de que el evento onclick esté correctamente asignado
-            boton.onclick = function() { mejorarStat(stat); };
-            
-            // Agregar atributo data-stat para referencia futura
-            boton.setAttribute('data-stat', stat);
-        }
-    });
+    // Buscar directamente por el atributo data-stat (más eficiente y seguro)
+    const boton = document.querySelector(`button[data-stat="${stat}"]`);
+    
+    if (boton) {
+        boton.innerHTML = `+${costo} oro <small>(1 Punto)</small>`;
+        boton.onclick = function() { mejorarStat(stat); };
+    }
 }
 
 function comprarCombate() {
