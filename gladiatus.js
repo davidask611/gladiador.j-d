@@ -1,7 +1,7 @@
 // --- DATOS DEL JUEGO ---
 const jugador = {
     nombre: "Ovak",
-    nivel: 10,
+    nivel: 7,
     vida: 100,
     vidaMax: 100,
     exp: 0,
@@ -34,12 +34,12 @@ const jugador = {
     },
     
     statsMaximos: {
-        fuerza: 9,
-        habilidad: 9,
-        agilidad: 9,
-        constitucion: 9,
-        carisma: 9,
-        inteligencia: 9
+        fuerza: 1000,
+        habilidad: 1000,
+        agilidad: 1000,
+        constitucion: 1000,
+        carisma: 1000,
+        inteligencia: 1000
     },
     
     equipo: {
@@ -415,27 +415,27 @@ function actualizarVestuarioUI() {
 }
 
 // --- SISTEMA DE COMBATES ---
-function cargarCombates() {
-    if (localStorage.getItem('combatesDisponibles')) {
-        jugador.combatesDisponibles = parseInt(localStorage.getItem('combatesDisponibles'));
-    }
+// function cargarCombates() {
+//     if (localStorage.getItem('combatesDisponibles')) {
+//         jugador.combatesDisponibles = parseInt(localStorage.getItem('combatesDisponibles'));
+//     }
 
-    if (localStorage.getItem('ultimoCombate')) {
-        const ahora = new Date().getTime();
-        const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate'));
-        const tiempoTranscurrido = ahora - ultimoCombate;
+//     if (localStorage.getItem('ultimoCombate')) {
+//         const ahora = new Date().getTime();
+//         const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate'));
+//         const tiempoTranscurrido = ahora - ultimoCombate;
         
-        const combatesRecuperados = Math.floor(tiempoTranscurrido / jugador.tiempoRecarga);
+//         const combatesRecuperados = Math.floor(tiempoTranscurrido / jugador.tiempoRecarga);
         
-        if (combatesRecuperados > 0) {
-            jugador.combatesDisponibles = Math.min(jugador.combatesMaximos, jugador.combatesDisponibles + combatesRecuperados);
-            localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
+//         if (combatesRecuperados > 0) {
+//             jugador.combatesDisponibles = Math.min(jugador.combatesMaximos, jugador.combatesDisponibles + combatesRecuperados);
+//             localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
             
-            const tiempoRestante = tiempoTranscurrido % jugador.tiempoRecarga;
-            localStorage.setItem('ultimoCombate', (ahora - tiempoRestante).toString());
-        }
-    }
-}
+//             const tiempoRestante = tiempoTranscurrido % jugador.tiempoRecarga;
+//             localStorage.setItem('ultimoCombate', (ahora - tiempoRestante).toString());
+//         }
+//     }
+// }
 
 function actualizarCombatesUI() {
     document.getElementById("combate-count").textContent = jugador.combatesDisponibles;
@@ -570,7 +570,7 @@ function actualizarUI() {
         document.getElementById(`${stat}-total`).textContent = jugador.statsBase[stat]; // Total
         document.getElementById(`${stat}-base`).textContent = base; // Base
         document.getElementById(`${stat}-item`).textContent = `+${bonosItems[stat]}`; // Bonus items
-        document.getElementById(`${stat}-max`).textContent = jugador.statsMaximos[stat]; // Máximo
+        // document.getElementById(`${stat}-max`).textContent = jugador.statsMaximos[stat]; // Máximo
     });
     // --- FIN DE SECCIÓN MODIFICADA ---
     
@@ -579,7 +579,7 @@ function actualizarUI() {
     actualizarVestuarioUI();
     actualizarUbicacionesUI();
     
-    localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
+    // localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
 
     if (jugador.vida >= jugador.vidaMax && jugador.intervaloCuracion) {
         clearInterval(jugador.intervaloCuracion);
