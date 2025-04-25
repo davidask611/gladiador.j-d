@@ -662,3 +662,18 @@ button:hover {
     margin-right: 10px;
     flex-grow: 1;
 }
+
+/* Añadir al final del archivo */
+.combate-energy button {
+    background: #e91e63;
+    margin-top: 10px;
+}
+
+.combate-energy button:hover {
+    background: #c2185b;
+}
+
+.badge[data-type="ruby"] {
+    background: #e91e63;
+    color: white;
+}

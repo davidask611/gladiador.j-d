@@ -19,7 +19,7 @@ const jugador = {
     combatesMaximos: 12,
     ultimoCombate: null,
     ultimaCuracion: null,
-    tiempoCuracion: 120000, // 2 minutos en milisegundos
+    tiempoCuracion: 300000, // 5 minutos en milisegundos
     vidaPorCuracion: 20,
     intervaloCuracion: null, // Para almacenar el intervalo del temporizador
     
@@ -300,20 +300,20 @@ function equiparItem(itemId) {
     jugador.equipo[slot] = jugador.inventario[itemIndex];
     jugador.inventario.splice(itemIndex, 1);
     
-    // Aplicar bonificaciones
+    // Aplicar bonificaciones (SOLO esto, elimina las líneas manuales)
     aplicarBonificacionesItem(jugador.equipo[slot], 'add');
     actualizarUI();
 }
 
-// Función auxiliar para aplicar/remover bonificaciones
-function aplicarBonificacionesItem(item, action) {
-    const multiplier = action === 'add' ? 1 : -1;
-    Object.entries(item).forEach(([key, val]) => {
-        if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
-            jugador.statsBase[key] += val * multiplier;
-        }
-    });
-}
+ // Función auxiliar para aplicar/remover bonificaciones
+ function aplicarBonificacionesItem(item, action) {
+     const multiplier = action === 'add' ? 1 : -1;
+     Object.entries(item).forEach(([key, val]) => {
+         if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
+             jugador.statsBase[key] += val * multiplier;
+         }
+     });
+ }
 
 function desequiparItem(slot) {
     const item = jugador.equipo[slot];
@@ -321,14 +321,7 @@ function desequiparItem(slot) {
 
     console.log(`[DEBUG] Desequipando: ${item.nombre} de slot ${slot}`); 
 
-    // Remover bonificaciones de stats
-    Object.entries(item).forEach(([key, val]) => {
-        if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
-            console.log(`[DEBUG] Removiendo bono de ${key}: -${val}`);
-            jugador.statsBase[key] -= val;
-        }
-    });
-
+    // Remover bonificaciones (SOLO esto, elimina las líneas manuales)
     aplicarBonificacionesItem(item, 'remove');
     jugador.inventario.push(item);
     jugador.equipo[slot] = null;
@@ -508,7 +501,8 @@ function actualizarUI() {
     document.getElementById("armadura-value").textContent = jugador.armadura;
     document.getElementById("victorias").textContent = `Victorias: ${jugador.victorias}`;
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
-    
+    document.getElementById("rubies-value").textContent = jugador.rubies;
+
     // Calcular daño total
     let danoMinTotal = 2; // Daño base mínimo
     let danoMaxTotal = 2; // Daño base máximo
@@ -703,8 +697,8 @@ function atacar(indexEnemigo) {
                 enemigo.vida = 0;
                 enemigo.derrotado = true;
                 enemigoVivo = false;
-                log += `💀 **¡Has derrotado al ${enemigo.nombre} + oro ${enemigo.oro} + exp ${enemigo.exp} !**\n`;
-                victoria();
+                log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                victoria()
                 break;
             }
         } else {
@@ -781,14 +775,18 @@ function huir() {
 function victoria() {
     let recompensaOro = 0;
     let recompensaExp = 0;
+    let recompensaRubies = 0;
     
     // Depuración: Mostrar enemigos derrotados
     console.log("Enemigos derrotados:");
     enemigosActuales.forEach(enemigo => {
         if (enemigo.derrotado) {
-            console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
             recompensaOro += enemigo.oro;
             recompensaExp += enemigo.exp;
+            // 50% de chance de obtener 1 rubí por enemigo derrotado
+            if (Math.random() > 0.5) {
+                recompensaRubies += 1;
+            }
         }
     });
     
@@ -805,6 +803,7 @@ function victoria() {
     
     jugador.oro += oroFinal;
     jugador.exp += recompensaExp;
+    jugador.rubies += recompensaRubies;  // Añadir rubíes obtenidos
     jugador.victorias++;
     
     // Depuración: Verificar cambios
@@ -815,13 +814,25 @@ function victoria() {
     let mensaje = document.getElementById("log-combate").textContent;
     mensaje += `\n\n🎉 ¡Victoria en ${ubicacionActual}! Ganaste ${oroFinal} oro y ${recompensaExp} experiencia.`;
     
-    // Aumentado a 70% la probabilidad de obtener un item
-    if (Math.random() <= 0.7) {
+    if (recompensaRubies > 0) {
+        mensaje += `\n💎 +${recompensaRubies} rubí(es)`;
+    }
+
+    // Aumentado a 50% la probabilidad de obtener un item
+    if (Math.random() <= 0.5) {
         const nivelZona = ubicaciones[ubicacionActual].niveles[0];
         const nuevoItem = generarItemAleatorio(nivelZona);
         jugador.inventario.push(nuevoItem);
         mensaje += `\n\n🎁 ¡Has obtenido ${nuevoItem.nombre}!`;
         console.log("Item obtenido:", nuevoItem);
+    }
+
+    // 50% de chance de obtener un item (existente)
+    if (Math.random() > 0.5) {
+        const nivelZona = ubicaciones[ubicacionActual].niveles[0];
+        const nuevoItem = generarItemAleatorio(nivelZona);
+        jugador.inventario.push(nuevoItem);
+        mensaje += `\n\n🎁 ¡Has obtenido ${nuevoItem.nombre}!`;
     }
     
     // Asegurarse de que el mensaje se añade al log existente
@@ -911,7 +922,7 @@ function aplicarCuracion() {
     if (vidaRecuperada > 0) {
         iniciarCuracion()
         document.getElementById("log-combate").textContent = 
-            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 2 minutos).`;
+            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 5 minutos).`;
         actualizarUI();
     }
 }
@@ -926,7 +937,7 @@ function forzarCuracion() {
     // Reiniciar el temporizador
     iniciarCuracion();
     document.getElementById("log-combate").textContent = 
-        "⏳ Temporizador de curación reiniciado. La próxima curación será en 2 minutos.";
+        "⏳ Temporizador de curación reiniciado. La próxima curación será en 5 minutos.";
 }
 
 // --- SISTEMA DE ENTRENAMIENTO ---
@@ -980,6 +991,10 @@ function cargarJuego() {
     if (datosGuardados) {
         const datos = JSON.parse(datosGuardados);
         Object.assign(jugador, datos);
+        // Inicializar rubíes si no existen en los datos guardados
+        if (jugador.rubies === undefined) {
+            jugador.rubies = 0;
+        }
     }
 
     // Iniciar el sistema de curación

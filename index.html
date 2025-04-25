@@ -28,9 +28,12 @@
                 <h1>👤 Visión General</h1>
                 <div>
                     <span class="badge">Oro: <span id="oro-value">50</span></span>
+                    <span class="badge">Rubíes: <span id="rubies-value">0</span></span>
+                    <span class="badge" id="victorias">Victorias: 0</span>
+                    <span class="badge" id="familia">Familia: Sin clan</span>
+                    <br>
+                    <br>
                     <div class="curacion-container">
-                        <span class="badge" id="victorias">Victorias: 0</span>
-                        <span class="badge" id="familia">Familia: Sin clan</span>
                         <button class="badge" onclick="forzarCuracion()">💚 Curación automática</button>
                         <div class="curacion-timer" id="curacion-timer">5:00</div>
                     </div>
@@ -248,6 +251,8 @@
                 <div class="combate-energy">
                     <div class="energy-counter">
                         <span id="combate-count">12</span>/12 Combates
+                    </div>
+                    <button onclick="comprarCombate()" style="margin-top: 10px;">💎 Comprar combate (1 rubí)</button>
                     </div>
                     <div class="energy-timer" id="combate-timer"></div>
                 </div>
