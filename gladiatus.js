@@ -7,6 +7,7 @@ const jugador = {
     exp: 0,
     expParaSubir: 100,
     oro: 50,
+    rubies: 0,  // Nueva propiedad
     victorias: 0,
     familia: "Sin clan",
     puntosEntrenamiento: 0,
@@ -19,7 +20,7 @@ const jugador = {
     combatesMaximos: 12,
     ultimoCombate: null,
     ultimaCuracion: null,
-    tiempoCuracion: 300000, // 5 minutos en milisegundos
+    tiempoCuracion: 120000, // 2 minutos en milisegundos
     vidaPorCuracion: 20,
     intervaloCuracion: null, // Para almacenar el intervalo del temporizador
     
@@ -300,20 +301,20 @@ function equiparItem(itemId) {
     jugador.equipo[slot] = jugador.inventario[itemIndex];
     jugador.inventario.splice(itemIndex, 1);
     
-    // Aplicar bonificaciones (SOLO esto, elimina las líneas manuales)
+    // Aplicar bonificaciones
     aplicarBonificacionesItem(jugador.equipo[slot], 'add');
     actualizarUI();
 }
 
- // Función auxiliar para aplicar/remover bonificaciones
- function aplicarBonificacionesItem(item, action) {
-     const multiplier = action === 'add' ? 1 : -1;
-     Object.entries(item).forEach(([key, val]) => {
-         if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
-             jugador.statsBase[key] += val * multiplier;
-         }
-     });
- }
+// Función auxiliar para aplicar/remover bonificaciones
+function aplicarBonificacionesItem(item, action) {
+    const multiplier = action === 'add' ? 1 : -1;
+    Object.entries(item).forEach(([key, val]) => {
+        if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
+            jugador.statsBase[key] += val * multiplier;
+        }
+    });
+}
 
 function desequiparItem(slot) {
     const item = jugador.equipo[slot];
@@ -321,7 +322,6 @@ function desequiparItem(slot) {
 
     console.log(`[DEBUG] Desequipando: ${item.nombre} de slot ${slot}`); 
 
-    // Remover bonificaciones (SOLO esto, elimina las líneas manuales)
     aplicarBonificacionesItem(item, 'remove');
     jugador.inventario.push(item);
     jugador.equipo[slot] = null;
@@ -501,8 +501,7 @@ function actualizarUI() {
     document.getElementById("armadura-value").textContent = jugador.armadura;
     document.getElementById("victorias").textContent = `Victorias: ${jugador.victorias}`;
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
-    document.getElementById("rubies-value").textContent = jugador.rubies;
-
+    
     // Calcular daño total
     let danoMinTotal = 2; // Daño base mínimo
     let danoMaxTotal = 2; // Daño base máximo
@@ -697,8 +696,8 @@ function atacar(indexEnemigo) {
                 enemigo.vida = 0;
                 enemigo.derrotado = true;
                 enemigoVivo = false;
-                log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
-                victoria()
+                log += `💀 **¡Has derrotado al ${enemigo.nombre} + oro ${enemigo.oro} + exp ${enemigo.exp} !**\n`;
+                victoria();
                 break;
             }
         } else {
@@ -781,6 +780,7 @@ function victoria() {
     console.log("Enemigos derrotados:");
     enemigosActuales.forEach(enemigo => {
         if (enemigo.derrotado) {
+            console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
             recompensaOro += enemigo.oro;
             recompensaExp += enemigo.exp;
             // 50% de chance de obtener 1 rubí por enemigo derrotado
@@ -922,7 +922,7 @@ function aplicarCuracion() {
     if (vidaRecuperada > 0) {
         iniciarCuracion()
         document.getElementById("log-combate").textContent = 
-            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 5 minutos).`;
+            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 2 minutos).`;
         actualizarUI();
     }
 }
@@ -937,7 +937,7 @@ function forzarCuracion() {
     // Reiniciar el temporizador
     iniciarCuracion();
     document.getElementById("log-combate").textContent = 
-        "⏳ Temporizador de curación reiniciado. La próxima curación será en 5 minutos.";
+        "⏳ Temporizador de curación reiniciado. La próxima curación será en 2 minutos.";
 }
 
 // --- SISTEMA DE ENTRENAMIENTO ---
