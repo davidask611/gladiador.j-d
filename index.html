@@ -15,6 +15,7 @@
                 <li><button onclick="mostrarSeccion('vista-general')">👤 Vista General</button></li>
                 <li><button onclick="mostrarSeccion('entrenamiento')">🏋️ Entrenamiento</button></li>
                 <li><button onclick="mostrarSeccion('combate')">⚔️ Combate</button></li>
+                <li><button onclick="mostrarSeccion('misiones')">📜 Misiones</button></li>               
             </ul>
         </nav>
     </header>
@@ -187,7 +188,7 @@
                     <div class="stat-details">
                         <p>
                             Básico: <span id="fuerza-base">5</span> | 
-                            Items: <span id="fuerza-item">+0</span> | 
+                            Items: <span id="fuerza-item">+0</span> 
                             <!-- Total: <span id="fuerza-total-display">5</span> |
                             Máx: <span id="fuerza-max">9</span> -->
                         </p>
@@ -202,7 +203,7 @@
                     <div class="stat-details">
                         <p>
                             Básico: <span id="habilidad-base">5</span> | 
-                            Items: <span id="habilidad-item">+0</span> | 
+                            Items: <span id="habilidad-item">+0</span>  
                             <!-- Total: <span id="habilidad-total-display">5</span> |
                             Máx: <span id="habilidad-max">9</span> -->
                         </p>
@@ -217,7 +218,7 @@
                     <div class="stat-details">
                         <p>
                             Básico: <span id="agilidad-base">5</span> | 
-                            Items: <span id="agilidad-item">+0</span> | 
+                            Items: <span id="agilidad-item">+0</span>  
                             <!-- Total: <span id="agilidad-total-display">5</span> |
                             Máx: <span id="agilidad-max">9</span> -->
                         </p>
@@ -232,7 +233,7 @@
                     <div class="stat-details">
                         <p>
                             Básico: <span id="constitucion-base">5</span> | 
-                            Items: <span id="constitucion-item">+0</span> | 
+                            Items: <span id="constitucion-item">+0</span> 
                             <!-- Total: <span id="constitucion-total-display">5</span> |
                             Máx: <span id="constitucion-max">9</span> -->
                         </p>
@@ -247,7 +248,7 @@
                     <div class="stat-details">
                         <p>
                             Básico: <span id="carisma-base">5</span> | 
-                            Items: <span id="carisma-item">+0</span> | 
+                            Items: <span id="carisma-item">+0</span>
                             <!-- Total: <span id="carisma-total-display">5</span> |
                             Máx: <span id="carisma-max">9</span> -->
                         </p>
@@ -262,7 +263,7 @@
                     <div class="stat-details">
                         <p>
                             Básico: <span id="inteligencia-base">5</span> | 
-                            Items: <span id="inteligencia-item">+0</span> | 
+                            Items: <span id="inteligencia-item">+0</span> 
                             <!-- Total: <span id="inteligencia-total-display">5</span> |
                             Máx: <span id="inteligencia-max">9</span> -->
                         </p>
@@ -307,6 +308,20 @@
                 
                 <div style="text-align: center; margin-top: 15px;">
                     <button onclick="huir()">🏃 Huir del combate</button>
+                </div>
+            </div>
+        </div>
+        <!-- Misiones -->
+        <div id="misiones" class="seccion">
+            <div class="panel">
+                <h2>📜 Misiones</h2>
+                <div class="filtros-misiones">
+                    <button onclick="filtrarMisiones('todas')" class="activo">Todas</button>
+                    <button onclick="filtrarMisiones('diarias')">Diarias</button>
+                    <button onclick="filtrarMisiones('historia')">Historia</button>
+                </div>
+                <div class="lista-misiones" id="lista-misiones">
+                    <!-- Las misiones se generarán aquí dinámicamente -->
                 </div>
             </div>
         </div>

@@ -70,8 +70,53 @@ const jugador = {
         constitucion: 25,
         carisma: 50,
         inteligencia: 50
-    }
+    },
+}    
+
+const misiones = {
+    diarias: [
+        {
+            id: 1,
+            titulo: "Cazador novato",
+            descripcion: "Derrota 3 enemigos en cualquier ubicación.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 3,
+            recompensa: { oro: 50, exp: 20 },
+            completada: false
+        },
+        {
+            id: 2,
+            titulo: "Entrenamiento intenso",
+            descripcion: "Mejora cualquier atributo 2 veces.",
+            tipo: "diaria",
+            progreso: 0,
+            requerido: 2,
+            recompensa: { oro: 30, rubies: 1 },
+            completada: false
+        }
+    ],
+    historia: [
+        {
+            id: 3,
+            titulo: "Primeros pasos",
+            descripcion: "Alcanza el nivel 5.",
+            tipo: "historia",
+            progreso: 0,
+            requerido: 5,
+            recompensa: { oro: 100, exp: 50, item: "arma" },
+            completada: false
+        }
+    ]
 };
+
+// Inicializar misiones en el jugador (si no existen)
+if (!jugador.misiones) {
+    jugador.misiones = {
+        diarias: JSON.parse(JSON.stringify(misiones.diarias)),
+        historia: JSON.parse(JSON.stringify(misiones.historia))
+    };
+}
 
 // Tipos de items y sus imágenes
 const tiposItems = {
@@ -851,6 +896,7 @@ function victoria() {
     jugador.oro += oroFinal;
     jugador.exp += recompensaExp;
     jugador.victorias++;
+    actualizarProgresoMisiones('enemigo');
 
     // Generar ítem (20% de probabilidad - solo una vez)
     if (Math.random() <= 0.2) {
@@ -997,10 +1043,10 @@ function forzarCuracion() {
 
 // --- SISTEMA DE ENTRENAMIENTO ---
 function subirNivel() {
+    actualizarProgresoMisiones('nivel');
     jugador.nivel++;
     jugador.exp = 0;
     jugador.expParaSubir = Math.floor(jugador.expParaSubir * 1.5);
-    jugador.puntosEntrenamiento += 1;
     jugador.vidaMax += 20 + (jugador.statsBase.constitucion * 2);
     jugador.vida = jugador.vidaMax;
     
@@ -1010,7 +1056,8 @@ function subirNivel() {
         });
     }
     
-    alert(`¡Subiste al nivel ${jugador.nivel}! +1 puntos de entrenamiento y +${20 + (jugador.statsBase.constitucion * 2)} de vida máxima.`);
+    // Modificar el mensaje de alerta para eliminar la referencia a puntos de entrenamiento
+    alert(`¡Subiste al nivel ${jugador.nivel}! +${20 + (jugador.statsBase.constitucion * 2)} de vida máxima.`);
     actualizarUI();
 }
 
@@ -1147,12 +1194,103 @@ function cargarJuego() {
     actualizarUI();
     actualizarCombatesUI();
     verificarCuracionAutomatica();
+    actualizarMisionesUI('todas');
 
     // Actualizar botones de entrenamiento al inicio
     Object.keys(jugador.mejorasStats).forEach(stat => {
         const costoBase = jugador.costosEntrenamiento[stat];
         const proximoCosto = costoBase + (jugador.mejorasStats[stat] * costoBase); // Usar costoBase en lugar de 50
         actualizarBotonStat(stat, proximoCosto);
+    });
+}
+
+function actualizarMisionesUI(filtro = 'todas') {
+    const lista = document.getElementById("lista-misiones");
+    lista.innerHTML = "";
+
+    let misionesMostrar = [];
+    if (filtro === 'diarias') misionesMostrar = [...jugador.misiones.diarias];
+    else if (filtro === 'historia') misionesMostrar = [...jugador.misiones.historia];
+    else misionesMostrar = [...jugador.misiones.diarias, ...jugador.misiones.historia];
+
+    if (misionesMostrar.length === 0) {
+        lista.innerHTML = "<p>No hay misiones disponibles.</p>";
+        return;
+    }
+
+    misionesMostrar.forEach(mision => {
+        const porcentaje = Math.min(100, (mision.progreso / mision.requerido) * 100);
+        const card = document.createElement("div");
+        card.className = `mision-card ${mision.completada ? 'completada' : ''}`;
+        card.innerHTML = `
+            <h3>${mision.titulo}</h3>
+            <p>${mision.descripcion}</p>
+            <div class="mision-progreso">
+                <div style="width: ${porcentaje}%"></div>
+            </div>
+            <p>Progreso: ${mision.progreso}/${mision.requerido}</p>
+            <div class="mision-recompensa">
+                Recompensa: 
+                ${mision.recompensa.oro ? `<span>💰 ${mision.recompensa.oro} oro</span>` : ''}
+                ${mision.recompensa.exp ? `<span>✨ ${mision.recompensa.exp} exp</span>` : ''}
+                ${mision.recompensa.rubies ? `<span>💎 ${mision.recompensa.rubies} rubí</span>` : ''}
+            </div>
+            ${mision.completada ? '<button class="btn-reclamar" onclick="reclamarRecompensa(' + mision.id + ')">Reclamar</button>' : ''}
+        `;
+        lista.appendChild(card);
+    });
+}
+
+function filtrarMisiones(filtro) {
+    document.querySelectorAll(".filtros-misiones button").forEach(btn => {
+        btn.classList.remove("activo");
+    });
+    event.target.classList.add("activo");
+    actualizarMisionesUI(filtro);
+}
+
+function reclamarRecompensa(id) {
+    let mision = jugador.misiones.diarias.find(m => m.id === id) || 
+                 jugador.misiones.historia.find(m => m.id === id);
+    
+    if (!mision || !mision.completada) return;
+
+    // Dar recompensas
+    if (mision.recompensa.oro) jugador.oro += mision.recompensa.oro;
+    if (mision.recompensa.exp) jugador.exp += mision.recompensa.exp;
+    if (mision.recompensa.rubies) jugador.rubies += mision.recompensa.rubies;
+    if (mision.recompensa.item) {
+        const item = generarItemAleatorio(jugador.nivel);
+        jugador.inventario.push(item);
+    }
+
+    // Eliminar misión (si es diaria)
+    if (mision.tipo === 'diaria') {
+        jugador.misiones.diarias = jugador.misiones.diarias.filter(m => m.id !== id);
+    }
+
+    actualizarUI();
+    actualizarMisionesUI(document.querySelector(".filtros-misiones button.activo").textContent.toLowerCase());
+}
+
+// --- Funciones para actualizar progreso ---
+function actualizarProgresoMisiones(tipo, cantidad = 1) {
+    let misionesActualizables = [];
+    if (tipo === 'enemigo') {
+        misionesActualizables = jugador.misiones.diarias.filter(m => 
+            m.descripcion.includes("Derrota") && !m.completada
+        );
+    } else if (tipo === 'nivel') {
+        misionesActualizables = jugador.misiones.historia.filter(m => 
+            m.descripcion.includes("Alcanza") && !m.completada
+        );
+    }
+
+    misionesActualizables.forEach(mision => {
+        mision.progreso += cantidad;
+        if (mision.progreso >= mision.requerido) {
+            mision.completada = true;
+        }
     });
 }
 
