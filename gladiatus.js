@@ -683,6 +683,7 @@ function atacar(indexEnemigo) {
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
     let enemigoVivo = true;
+    let ganoRubies = false; // Variable para rastrear si ganó rubíes
 
     // Batalla automática hasta que alguien muera
     while (jugadorVivo && enemigoVivo) {
@@ -697,8 +698,19 @@ function atacar(indexEnemigo) {
                 enemigo.vida = 0;
                 enemigo.derrotado = true;
                 enemigoVivo = false;
-                log += `💀 **¡Has derrotado al ${enemigo.nombre} + oro ${enemigo.oro} + exp ${enemigo.exp} !**\n`;
-                victoria();
+                
+                // Verificar si ganó rubíes (50% de probabilidad)
+                if (Math.random() > 0.5) {
+                    ganoRubies = true;
+                    jugador.rubies += 1; // Añadir rubí al jugador
+                    log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                    log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp} | 💎 Rubí: +1\n`; // Mensaje inmediato
+                } else {
+                    log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                    log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
+                }
+                
+                victoria(); // Esto mostrará el resumen completo después
                 break;
             }
         } else {
@@ -732,17 +744,16 @@ function atacar(indexEnemigo) {
 
     // Descontar combate solo al finalizar la batalla
     if (!jugadorVivo || !enemigoVivo) {
-        usarCombate(); // Resta 1 combate disponible
+        usarCombate();
     }
 
-    // Verificar si todos los enemigos están derrotados (victoria en la ubicación)
+    // Verificar victoria/derrota global
     if (enemigosActuales.every(e => e.derrotado)) {
-        victoria();
+        victoria(); // Muestra el resumen completo de la ubicación
     } else if (!jugadorVivo) {
         derrota();
     }
-    actualizarUI();
-    verificarCuracionAutomatica(); // <-- Añadir esta línea
+    verificarCuracionAutomatica();
 }
 
 function huir() {
