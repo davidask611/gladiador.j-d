@@ -14,3 +14,5 @@ en la fabrica se podra crear "armas, escudo, anillos, casco, pechera, guantes, b
 la subida de nivel que no te de puntos
 
 hacer que las batallas te den siempre el oro y la experiencia OK
+
+hacer que las batallas entre cada batalla tengo un tiempo de 15 segundos
