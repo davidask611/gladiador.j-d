@@ -502,7 +502,8 @@ function actualizarUI() {
     document.getElementById("victorias").textContent = `Victorias: ${jugador.victorias}`;
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
     document.getElementById("rubies-value").textContent = jugador.rubies; // Mostrar rubíes
-    
+    document.querySelector("button[onclick='comprarCombate()']").disabled = jugador.rubies < 1;
+
     // Calcular daño total
     let danoMinTotal = 2; // Daño base mínimo
     let danoMaxTotal = 2; // Daño base máximo
@@ -753,7 +754,8 @@ function atacar(indexEnemigo) {
     } else if (!jugadorVivo) {
         derrota();
     }
-    verificarCuracionAutomatica();
+    verificarCuracionAutomatica(); // <-- Añadir esta línea
+    actualizarUI();
 }
 
 function huir() {
@@ -941,7 +943,6 @@ function aplicarCuracion() {
     const vidaRecuperada = jugador.vida - vidaAnterior;
     
     if (vidaRecuperada > 0) {
-        iniciarCuracion()
         document.getElementById("log-combate").textContent = 
             `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 2 minutos).`;
         actualizarUI();
@@ -1006,6 +1007,27 @@ function mejorarStat(stat) {
     verificarCuracionAutomatica(); // <-- Añadir esta línea
 }
 
+function comprarCombate() {
+    if (jugador.rubies >= 1) {
+        const confirmar = confirm("¿Deseas gastar 1 rubí para comprar un combate adicional?");
+        if (confirmar) {
+            jugador.rubies -= 1;
+            jugador.combatesDisponibles += 1;
+            
+            // Asegurarse de no exceder el máximo
+            if (jugador.combatesDisponibles > jugador.combatesMaximos) {
+                jugador.combatesDisponibles = jugador.combatesMaximos;
+            }
+            
+            actualizarUI();
+            actualizarCombatesUI();
+            alert("¡Compra exitosa! Has obtenido 1 combate adicional.");
+        }
+    } else {
+        alert("No tienes suficientes rubíes. Necesitas al menos 1 rubí para comprar un combate.");
+    }
+}
+
 // --- INICIALIZACIÓN ---
 function cargarJuego() {
     const datosGuardados = localStorage.getItem('gladiatusSave');
@@ -1034,57 +1056,9 @@ function cargarJuego() {
             descripcion: "Daño: 2-4",
             precio: 30
         };
-        
-        const armaduraInicial = {
-            id: 2,
-            nombre: "Armadura de cuero",
-            tipo: "pechera",
-            danoMin: 0,
-            danoMax: 0,
-            defensa: 3,
-            img: "ropa/pechera.png",
-            descripcion: "Defensa: +3",
-            precio: 45
-        };
- 
-        const cascoInicial = {
-            id: 3,
-            nombre: "Casco de cuero",
-            tipo: "casco",
-            danoMin: 0,
-            danoMax: 0,
-            defensa: 3,
-            img: "ropa/casco.png",
-            descripcion: "Defensa: +3",
-            precio: 45
-        };  
-        
-        const guantesInicial = {
-            id: 4,
-            nombre: "Guantes de cuero",
-            tipo: "guantes",
-            danoMin: 0,
-            danoMax: 0,
-            defensa: 3,
-            img: "ropa/guantes.png",
-            descripcion: "Defensa: +3",
-            precio: 45
-        };        
 
-        const botasInicial = {
-            id: 5,
-            nombre: "Botas de cuero",
-            tipo: "botas",
-            danoMin: 0,
-            danoMax: 0,
-            defensa: 3,
-            img: "ropa/botas.png",
-            descripcion: "Defensa: +3",
-            precio: 45
-        };
-        
         const escudoInicial = {
-            id: 6,
+            id: 2,
             nombre: "Escudo de madera",
             tipo: "escudo",
             danoMin: 0,
@@ -1094,59 +1068,16 @@ function cargarJuego() {
             descripcion: "Defensa: +3",
             precio: 45
         };       
-        
-        const anilloInicial = {
-            id: 7,
-            nombre: "Blue Ring",
-            tipo: "anillo",
-            danoMin: 0,
-            danoMax: 0,
-            defensa: 3,
-            img: "ropa/Blue_ring.png",
-            descripcion: "Defensa: +3",
-            precio: 45
-        };
-
-        const pendienteInicial = {
-            id: 8,
-            nombre: "Gold symbol",
-            tipo: "pendiente",
-            danoMin: 1,
-            danoMax: 1,
-            defensa: 0,
-            img: "ropa/pendiente.png",
-            descripcion: "Dano: 1-1",
-            precio: 45
-        };
-        
-        const anillo1Inicial = {
-            id: 9,
-            nombre: "Malchite Ring",
-            tipo: "anillo",
-            danoMin: 0,
-            danoMax: 0,
-            defensa: 3,
-            img: "ropa/Malachite_ring.png",
-            descripcion: "Defensa: +3",
-            precio: 45
-        };        
-        
-        jugador.inventario.push(espadaInicial, armaduraInicial, cascoInicial, guantesInicial, botasInicial, escudoInicial, anilloInicial, pendienteInicial, anillo1Inicial);
+    
+        jugador.inventario.push(espadaInicial, escudoInicial);
         equiparItem(1); // Equipar espada
-        equiparItem(2); // Equipar armadura
-        equiparItem(3); // Equipar casco 
-        equiparItem(4); // Equipar guantes
-        equiparItem(5); // Equipar botas
-        equiparItem(6); // Equipar escudo   
-        equiparItem(7); // Equipar anillo  
-        equiparItem(8); // Equipar pendiente 
-        equiparItem(9); // Equipar anillo1            
+        equiparItem(2); // Equipar escudo       
     }
     
     cargarCombates();
     actualizarUI();
     actualizarCombatesUI();
-    verificarCuracionAutomatica(); // <-- Añadir esta línea
+    verificarCuracionAutomatica();
 }
 
 window.addEventListener('load', cargarJuego);
