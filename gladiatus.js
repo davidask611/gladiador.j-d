@@ -501,6 +501,7 @@ function actualizarUI() {
     document.getElementById("armadura-value").textContent = jugador.armadura;
     document.getElementById("victorias").textContent = `Victorias: ${jugador.victorias}`;
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
+    document.getElementById("rubies-value").textContent = jugador.rubies; // Mostrar rubíes
     
     // Calcular daño total
     let danoMinTotal = 2; // Daño base mínimo
@@ -897,6 +898,20 @@ function iniciarCuracion() {
         }, 1000);
     } else {
         document.getElementById("curacion-timer").textContent = "Completo";
+    }
+}
+
+function canjearVictorias() {
+    if (jugador.victorias >= 5) {
+        const confirmar = confirm("¿Deseas canjear 5 victorias por 1 rubí?");
+        if (confirmar) {
+            jugador.victorias -= 5;
+            jugador.rubies += 1;
+            actualizarUI();
+            alert("¡Canje exitoso! Has obtenido 1 rubí.");
+        }
+    } else {
+        alert("Necesitas al menos 5 victorias para canjear por 1 rubí.");
     }
 }
 
