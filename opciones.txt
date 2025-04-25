@@ -11,7 +11,7 @@ agregar eventos dinamicos como mas posibilidad de conseguir oro, rubi y experien
 menu: agregar una fabrica para crear objetos solicitando materias primas y agregar un contador de tiempo de lo que tarde el objeto en crearse
 en la fabrica se podra crear "armas, escudo, anillos, casco, pechera, guantes, botas , pendientes y posiones para curarse la vida"
 
-la subida de nivel que no te de puntos
+la subida de nivel que no te de puntos ok
 
 hacer que las batallas te den siempre el oro y la experiencia OK
 
