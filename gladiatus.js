@@ -19,7 +19,7 @@ const jugador = {
     combatesMaximos: 12,
     ultimoCombate: null,
     ultimaCuracion: null,
-    tiempoCuracion: 300000, // 5 minutos en milisegundos
+    tiempoCuracion: 120000, // 2 minutos en milisegundos
     vidaPorCuracion: 20,
     intervaloCuracion: null, // Para almacenar el intervalo del temporizador
     
@@ -703,7 +703,7 @@ function atacar(indexEnemigo) {
                 enemigo.vida = 0;
                 enemigo.derrotado = true;
                 enemigoVivo = false;
-                log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                log += `💀 **¡Has derrotado al ${enemigo.nombre} + oro ${enemigo.oro} + exp ${enemigo.exp} !**\n`;
                 victoria();
                 break;
             }
@@ -911,7 +911,7 @@ function aplicarCuracion() {
     if (vidaRecuperada > 0) {
         iniciarCuracion()
         document.getElementById("log-combate").textContent = 
-            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 5 minutos).`;
+            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 2 minutos).`;
         actualizarUI();
     }
 }
@@ -926,7 +926,7 @@ function forzarCuracion() {
     // Reiniciar el temporizador
     iniciarCuracion();
     document.getElementById("log-combate").textContent = 
-        "⏳ Temporizador de curación reiniciado. La próxima curación será en 5 minutos.";
+        "⏳ Temporizador de curación reiniciado. La próxima curación será en 2 minutos.";
 }
 
 // --- SISTEMA DE ENTRENAMIENTO ---
