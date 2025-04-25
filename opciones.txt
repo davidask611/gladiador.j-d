@@ -1,17 +1,17 @@
-el entrenamiento cambiarlo por coste de oro y el coste de oro se valla duplicando por cada punto puesto.
+el entrenamiento cambiarlo por coste de oro y el coste de oro se valla duplicando por cada punto puesto. OK
 
-los puntos de entrenamiento maximos seria infinito ok
+los puntos de entrenamiento maximos seria infinito OK
 
 moneda nueva Rubi, se puede conseguir en cada batalla tenes un 50% de posibilidad que te caiga 1 rubi. OK
 
-menu: agregar una seccion llamada misiones
+menu: agregar una seccion llamada misiones OK
 
 agregar eventos dinamicos como mas posibilidad de conseguir oro, rubi y experiencia 
 
 menu: agregar una fabrica para crear objetos solicitando materias primas y agregar un contador de tiempo de lo que tarde el objeto en crearse
 en la fabrica se podra crear "armas, escudo, anillos, casco, pechera, guantes, botas , pendientes y posiones para curarse la vida"
 
-la subida de nivel que no te de puntos ok
+la subida de nivel que no te de puntos OK
 
 hacer que las batallas te den siempre el oro y la experiencia OK
 
