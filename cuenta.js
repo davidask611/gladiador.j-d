@@ -146,3 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html';
     }
 });
+
+function logout() {
+    // Eliminar el usuario actual del localStorage
+    localStorage.removeItem('usuarioActual');
+    
+    // Redirigir a la página de login
+    window.location.href = 'cuenta.html';
+}
