@@ -852,3 +852,23 @@ button:hover {
     50% { background: rgba(46, 204, 113, 0.4); }
     100% { background: rgba(46, 204, 113, 0.1); }
 }
+
+/* Estilos para la sección de cuenta */
+#cuenta.activa {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+#cuenta .panel {
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+}
+
+#cuenta button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+}

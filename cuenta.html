@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cuenta - Gladiatus RPG</title>
+    <link rel="stylesheet" href="gladiatus.css">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: #34495e;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .auth-tab.active {
+            background: #2c3e50;
+            border-bottom: 2px solid #e74c3c;
+            font-weight: bold;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #f1c40f;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #34495e;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .auth-btn:hover {
+            background: #c0392b;
+        }
+
+        .auth-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #27ae60;
+            color: #2ecc71;
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #c0392b;
+            color: #e74c3c;
+        }
+
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #3498db;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-tabs">
+            <div class="auth-tab active" onclick="showTab('login')">Iniciar Sesión</div>
+            <div class="auth-tab" onclick="showTab('register')">Registrarse</div>
+        </div>
+
+        <!-- Formulario de Login -->
+        <div id="login-form" class="auth-form active">
+            <div class="form-group">
+                <label for="login-username">Usuario</label>
+                <input type="text" id="login-username" placeholder="Tu nombre de usuario">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" placeholder="Tu contraseña">
+            </div>
+            <button class="auth-btn" onclick="login()">Iniciar Sesión</button>
+            <div id="login-message" class="auth-message"></div>
+        </div>
+
+        <!-- Formulario de Registro -->
+        <div id="register-form" class="auth-form">
+            <div class="form-group">
+                <label for="register-username">Usuario</label>
+                <input type="text" id="register-username" placeholder="Elige un nombre de usuario">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Contraseña</label>
+                <input type="password" id="register-password" placeholder="Crea una contraseña segura">
+            </div>
+            <div class="form-group">
+                <label for="register-confirm">Confirmar Contraseña</label>
+                <input type="password" id="register-confirm" placeholder="Repite tu contraseña">
+            </div>
+            <button class="auth-btn" onclick="register()">Registrarse</button>
+            <div id="register-message" class="auth-message"></div>
+        </div>
+
+        <a href="index.html" class="back-btn">← Volver al juego</a>
+    </div>
+
+    <script src="cuenta.js"></script>
+</body>
+</html>

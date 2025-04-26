@@ -73,6 +73,12 @@ const jugador = {
     },
 }    
 
+// Cargar datos del jugador si hay un usuario logueado
+const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
+if (usuarioActual && usuarioActual.jugador) {
+    Object.assign(jugador, usuarioActual.jugador);
+}
+
 const misiones = {
     diarias: [
         // Misiones básicas de combate
@@ -1364,6 +1370,13 @@ function cargarJuego() {
     //     if (jugador.rubies === undefined) {
     //         jugador.rubies = 0;
     //     }
+    // }
+
+    // // Verificar si hay un usuario logueado
+    // const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
+    // if (!usuarioActual) {
+    //     mostrarSeccion('cuenta');
+    //     return;
     // }
 
     // Iniciar el sistema de curación
