@@ -853,6 +853,94 @@ button:hover {
     100% { background: rgba(46, 204, 113, 0.1); }
 }
 
+/* Estilos para la ruleta */
+#ruleta-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2c3e50;
+    padding: 20px;
+    border-radius: 10px;
+    border: 3px solid #f1c40f;
+    z-index: 1001;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+    text-align: center;
+}
+
+.resultado-ruleta {
+    color: white;
+}
+
+.resultado-ruleta h3 {
+    color: #f1c40f;
+    margin-top: 0;
+}
+
+.resultado-ruleta button {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.resultado-ruleta button:hover {
+    background: #c0392b;
+}
+
+.evento-activo-panel {
+    background: #8e44ad;
+    border: 2px solid #f1c40f;
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 10px;
+    animation: pulse 2s infinite;
+}
+
+.evento-timer {
+    font-family: monospace;
+    font-size: 16px;
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    text-align: center;
+}
+
+.beneficios-evento {
+    margin-top: 10px;
+}
+
+.beneficios-evento p {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-ruleta {
+    background: #9b59b6 !important;
+    color: white !important;
+    padding: 12px 24px !important;
+    font-size: 18px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    animation: pulse 1.5s infinite !important;
+    margin: 10px auto !important;
+    display: block !important;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(155, 89, 182, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(155, 89, 182, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(155, 89, 182, 0); }
+}
+
 /* Estilos para la sección de cuenta */
 #cuenta.activa {
     display: flex;

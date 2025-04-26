@@ -1,3 +1,10 @@
+// Constantes del juego
+const MAX_INVENTARIO = 30;
+const TIEMPO_RECARGA_COMBATES = 300000; // 5 minutos en ms
+const TIEMPO_CURACION = 120000; // 2 minutos en ms
+const TIEMPO_EVENTO = 1800000; // 30 minutos en ms
+const TIEMPO_ENTRE_EVENTOS = 259200000; // 3 días en ms
+
 // --- DATOS DEL JUEGO ---
 const jugador = {
     nombre: "Ovak",
@@ -22,6 +29,7 @@ const jugador = {
     tiempoCuracion: 120000, // 2 minutos en milisegundos
     vidaPorCuracion: 20,
     intervaloCuracion: null, // Para almacenar el intervalo del temporizador
+    tiempoRecarga: 300000, // 5 minutos en milisegundos
     
     statsBase: {
         fuerza: 5,
@@ -672,28 +680,30 @@ function actualizarVestuarioUI() {
     resumenElement.innerHTML = resumenHTML;
 }
 
-// --- SISTEMA DE COMBATES ---
-// function cargarCombates() {
-//     if (localStorage.getItem('combatesDisponibles')) {
-//         jugador.combatesDisponibles = parseInt(localStorage.getItem('combatesDisponibles'));
-//     }
+function cargarCombates() {
+    if (localStorage.getItem('combatesDisponibles')) {
+        jugador.combatesDisponibles = parseInt(localStorage.getItem('combatesDisponibles'));
+    }
 
-//     if (localStorage.getItem('ultimoCombate')) {
-//         const ahora = new Date().getTime();
-//         const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate'));
-//         const tiempoTranscurrido = ahora - ultimoCombate;
+    if (localStorage.getItem('ultimoCombate')) {
+        const ahora = new Date().getTime();
+        const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate'));
+        const tiempoTranscurrido = ahora - ultimoCombate;
         
-//         const combatesRecuperados = Math.floor(tiempoTranscurrido / jugador.tiempoRecarga);
+        // Asumiendo que tienes esta propiedad en el objeto jugador
+        const tiempoRecarga = jugador.tiempoRecarga || 300000; // 5 minutos por defecto
         
-//         if (combatesRecuperados > 0) {
-//             jugador.combatesDisponibles = Math.min(jugador.combatesMaximos, jugador.combatesDisponibles + combatesRecuperados);
-//             localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
+        const combatesRecuperados = Math.floor(tiempoTranscurrido / tiempoRecarga);
+        
+        if (combatesRecuperados > 0) {
+            jugador.combatesDisponibles = Math.min(jugador.combatesMaximos, jugador.combatesDisponibles + combatesRecuperados);
+            localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
             
-//             const tiempoRestante = tiempoTranscurrido % jugador.tiempoRecarga;
-//             localStorage.setItem('ultimoCombate', (ahora - tiempoRestante).toString());
-//         }
-//     }
-// }
+            const tiempoRestante = tiempoTranscurrido % tiempoRecarga;
+            localStorage.setItem('ultimoCombate', (ahora - tiempoRestante).toString());
+        }
+    }
+}
 
 function actualizarCombatesUI() {
     document.getElementById("combate-count").textContent = jugador.combatesDisponibles;
@@ -890,6 +900,11 @@ function actualizarUbicacionesUI() {
 
 // --- SISTEMA DE COMBATE ---
 function seleccionarUbicacion(nombreUbicacion) {
+        // Verificar que la ubicación existe
+        if (!ubicaciones[nombreUbicacion]) {
+            console.error("Ubicación no encontrada:", nombreUbicacion);
+            return;
+        }
     const ubicacion = ubicaciones[nombreUbicacion];
     
     // Verificar nivel del jugador
@@ -987,6 +1002,11 @@ function actualizarEnemigosUI() {
 }
 
 function atacar(indexEnemigo) {
+    let recibioDaño = false;
+    if (!ubicacionActual) {
+        console.error("No hay ubicación actual definida");
+        return;
+    }
     if (jugador.combatesDisponibles <= 0) {
         document.getElementById("log-combate").textContent = "¡No tienes combates disponibles! Espera a que se recarguen.";
         return;
@@ -1001,7 +1021,6 @@ function atacar(indexEnemigo) {
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
     let enemigoVivo = true;
-    let recibioDaño = false;
 
     // Batalla automática hasta que alguien muera
     while (jugadorVivo && enemigoVivo) {
@@ -1020,7 +1039,7 @@ function atacar(indexEnemigo) {
                 log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
                 log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
                 
-                victoria();
+                victoria(recibioDaño);
                 break;
             }
         } else {
@@ -1091,87 +1110,94 @@ function huir() {
     }
 }
 
-function victoria() {
-    let recompensaOro = 0;
-    let recompensaExp = 0;
-    let itemsObtenidos = [];
+function victoria(recibioDaño) {
+     let recompensaOro = 0;
+     let recompensaExp = 0;
+     let itemsObtenidos = [];
     
-    // Calcular recompensas de enemigos derrotados
-    console.log("Enemigos derrotados:");
-    enemigosActuales.forEach(enemigo => {
-        if (enemigo.derrotado) {
-            console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
-            recompensaOro += enemigo.oro;
-            recompensaExp += enemigo.exp;
-        }
-    });
+     // Calcular recompensas de enemigos derrotados
+     console.log("Enemigos derrotados:");
+     enemigosActuales.forEach(enemigo => {
+         if (enemigo.derrotado) {
+             console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
+             recompensaOro += enemigo.oro;
+             recompensaExp += enemigo.exp;
+         }
+     });
     
-    // Aplicar bonus de carisma al oro
-    const bonusCarisma = 1 + (jugador.statsBase.carisma * 0.1);
-    const oroFinal = Math.floor(recompensaOro * bonusCarisma);
+     const nivelZona = ubicaciones[ubicacionActual].niveles[0]; // Ahora seguro que existe
+     // Aplicar bonus de carisma al oro
+     const bonusCarisma = 1 + (jugador.statsBase.carisma * 0.1);
+     const oroFinal = Math.floor(recompensaOro * bonusCarisma);
+     const oroConBonus = aplicarBonusEvento('oro', oroFinal);
+     jugador.oro += oroConBonus;
     
-    // Depuración (opcional)
-    console.log(`Oro base: ${recompensaOro} + Bonus carisma (x${bonusCarisma.toFixed(1)}) = ${oroFinal}`);
+     const expConBonus = aplicarBonusEvento('exp', recompensaExp);
+     jugador.exp += expConBonus;
+    
+    
+     // Depuración (opcional)
+     console.log(`Oro base: ${recompensaOro} + Bonus carisma (x${bonusCarisma.toFixed(1)}) = ${oroFinal}`);
 
-    // Aplicar recompensas al jugador
-    jugador.oro += oroFinal;
-    jugador.exp += recompensaExp;
-    jugador.victorias++;
+     // Aplicar recompensas al jugador
+     jugador.oro += oroFinal;
+     jugador.exp += recompensaExp;
+     jugador.victorias++;
 
-    // Generar ítem (20% de probabilidad - solo una vez)
-    if (Math.random() <= 0.2) {
-        const nivelZona = ubicaciones[ubicacionActual].niveles[0];
-        const nuevoItem = generarItemAleatorio(nivelZona);
-        jugador.inventario.push(nuevoItem);
-        itemsObtenidos.push(nuevoItem);
-        console.log("Item obtenido:", nuevoItem);
-    }
+     // Generar ítem (20% de probabilidad - solo una vez)
+     if (Math.random() <= 0.2) {
+         const nivelZona = ubicaciones[ubicacionActual].niveles[0];
+         const nuevoItem = generarItemAleatorio(nivelZona);
+         jugador.inventario.push(nuevoItem);
+         itemsObtenidos.push(nuevoItem);
+         console.log("Item obtenido:", nuevoItem);
+     }
 
-    // Construir mensaje detallado
-    let mensaje = document.getElementById("log-combate").textContent;
-    mensaje += `\n\n⚔️ **¡VICTORIA EN ${ubicacionActual.toUpperCase()}!** ⚔️\n`;
-    mensaje += `\n▸ 💰 Oro: ${oroFinal} (Bonus carisma: x${bonusCarisma.toFixed(1)})`;
-    mensaje += `\n▸ ✨ Experiencia: ${recompensaExp}`;
+     // Construir mensaje detallado
+     let mensaje = document.getElementById("log-combate").textContent;
+     mensaje += `\n\n⚔️ **¡VICTORIA EN ${ubicacionActual.toUpperCase()}!** ⚔️\n`;
+     mensaje += `\n▸ 💰 Oro: ${oroFinal} (Bonus carisma: x${bonusCarisma.toFixed(1)})`;
+     mensaje += `\n▸ ✨ Experiencia: ${recompensaExp}`;
     
-    if (itemsObtenidos.length > 0) {
-        mensaje += `\n\n🎁 **¡ITEM OBTENIDO!**`;
-        itemsObtenidos.forEach(item => {
-            mensaje += `\n▸ ${item.nombre} (${item.descripcion})`;
-        });
-    } else {
-        mensaje += `\n\n🔍 No encontraste items esta vez.`;
-    }
+     if (itemsObtenidos.length > 0) {
+         mensaje += `\n\n🎁 **¡ITEM OBTENIDO!**`;
+         itemsObtenidos.forEach(item => {
+             mensaje += `\n▸ ${item.nombre} (${item.descripcion})`;
+         });
+     } else {
+         mensaje += `\n\n🔍 No encontraste items esta vez.`;
+     }
 
-    // Actualizar UI y finalizar combate
-    document.getElementById("log-combate").textContent = mensaje;
-    enCombate = false;
-    ubicacionActual = "";
+     // Actualizar UI y finalizar combate
+     document.getElementById("log-combate").textContent = mensaje;
+     enCombate = false;
+     ubicacionActual = "";
     
-    // Verificar subida de nivel
-    if (jugador.exp >= jugador.expParaSubir) {
-        subirNivel();
-    }
+     // Verificar subida de nivel
+     if (jugador.exp >= jugador.expParaSubir) {
+         subirNivel();
+     }
     
-    actualizarUI();
+     actualizarUI();
     
-    // Depuración final
-    console.log("Estado del jugador:", {
-        oro: jugador.oro,
-        exp: jugador.exp,
-        rubies: jugador.rubies,
-        victorias: jugador.victorias
-    });
+     // Depuración final
+     console.log("Estado del jugador:", {
+         oro: jugador.oro,
+         exp: jugador.exp,
+         rubies: jugador.rubies,
+         victorias: jugador.victorias
+     });
 
-    actualizarProgresoMisiones('enemigo', 1); // Contar enemigos derrotados
-    if (!recibioDaño) {
-        actualizarProgresoMisiones('enemigoSinDaño', 1); // Para misiones de "sin recibir daño"
-    }
+     actualizarProgresoMisiones('enemigo', 1); // Contar enemigos derrotados
+     if (!recibioDaño) {
+         actualizarProgresoMisiones('enemigoSinDaño', 1); // Para misiones de "sin recibir daño"
+     }
 
-    if (itemsObtenidos.length > 0) {
-        actualizarProgresoMisiones('conseguirItem', itemsObtenidos.length);
-        actualizarProgresoMisiones('conseguirOro');
-    }
-}
+     if (itemsObtenidos.length > 0) {
+         actualizarProgresoMisiones('conseguirItem', itemsObtenidos.length);
+         actualizarProgresoMisiones('conseguirOro');
+     }
+ }
 
 function derrota() {
     jugador.vida = Math.floor(jugador.vidaMax == 0);
@@ -1427,6 +1453,7 @@ function cargarJuego() {
 
     reiniciarMisiones(); // <-- Reemplazar reiniciarMisionesDiarias() por esto
     actualizarMisionesUI('todas');
+    iniciarEventosProgramados();
 }
 function actualizarMisionesUI(filtro = 'todas') {
     const lista = document.getElementById("lista-misiones");
@@ -1529,6 +1556,20 @@ function reclamarRecompensa(id) {
         alert("¡Inventario lleno! No puedes recibir más items.");
         return;
     }
+
+    if (mision.recompensa.oro) {
+        const oroConBonus = aplicarBonusEvento('oro', mision.recompensa.oro);
+        jugador.oro += oroConBonus;
+    }
+    if (mision.recompensa.exp) {
+        const expConBonus = aplicarBonusEvento('exp', mision.recompensa.exp);
+        jugador.exp += expConBonus;
+    }
+    if (mision.recompensa.rubies) {
+        const rubiesConBonus = aplicarBonusEvento('rubies', mision.recompensa.rubies);
+        jugador.rubies += rubiesConBonus;
+    }
+    
 
     actualizarMisionesUI(document.querySelector(".filtros-misiones button.activo").textContent.toLowerCase());
     actualizarUI();
@@ -1681,6 +1722,561 @@ function generarItem(recompensa) {
         };
     }
     return null;
+}
+
+// --- SISTEMA DE EVENTOS PROGRAMADOS ---
+const eventos = {
+    lista: [
+        {
+            id: 1,
+            nombre: "¡Fiebre del Oro!",
+            descripcion: "Durante este evento, todas las recompensas de oro se duplican.",
+            tipo: "oro",
+            bonus: 2.0, // Multiplicador de oro
+            duracion: 1800000, // 30 minutos en milisegundos
+            orden: 1
+        },
+        {
+            id: 2,
+            nombre: "¡Auge de Rubíes!",
+            descripcion: "Posibilidad de obtener rubíes al completar misiones y derrotar enemigos.",
+            tipo: "rubies",
+            bonus: 0.3, // Probabilidad de obtener rubíes (30%)
+            duracion: 1800000,
+            orden: 2
+        },
+        {
+            id: 3,
+            nombre: "¡Entrenamiento Intensivo!",
+            descripcion: "Ganas el doble de experiencia en combates y misiones.",
+            tipo: "exp",
+            bonus: 2.0, // Multiplicador de experiencia
+            duracion: 1800000,
+            orden: 3
+        },
+        {
+            id: 4,
+            nombre: "¡Bonanza Total!",
+            descripcion: "Oro, rubíes y experiencia aumentados durante el evento.",
+            tipo: "combo",
+            bonus: {
+                oro: 1.5,
+                rubies: 0.2,
+                exp: 1.5
+            },
+            duracion: 1800000,
+            orden: 4
+        },
+        {
+            id: 5,
+            nombre: "¡Ruleta de la Fortuna!",
+            descripcion: "Gira la ruleta para obtener grandes premios o perder algo.",
+            tipo: "azar",
+            duracion: 1800000,
+            orden: 5
+        }
+    ],
+    activo: null,
+    temporizador: null,
+    ultimoEvento: null,
+    intervaloEntreEventos: 259200000 // 3 días en milisegundos (1000 * 60 * 60 * 24 * 3)
+};
+
+function iniciarEventosProgramados() {
+    // Verificar si ya hay un evento activo
+    if (eventos.activo) return;
+    
+    const ahora = new Date().getTime();
+    
+    // Cargar último evento desde localStorage
+    if (localStorage.getItem('ultimoEvento')) {
+        eventos.ultimoEvento = JSON.parse(localStorage.getItem('ultimoEvento'));
+    }
+    
+    // Determinar qué evento toca ahora
+    let siguienteEvento;
+    
+    if (!eventos.ultimoEvento) {
+        // Primer evento (Oro)
+        siguienteEvento = eventos.lista.find(e => e.orden === 1);
+    } else {
+        const tiempoDesdeUltimoEvento = ahora - eventos.ultimoEvento.fin;
+        
+        if (tiempoDesdeUltimoEvento >= eventos.intervaloEntreEventos) {
+            // Calcular siguiente evento en el ciclo
+            const siguienteOrden = eventos.ultimoEvento.orden % 5 + 1;
+            siguienteEvento = eventos.lista.find(e => e.orden === siguienteOrden);
+        } else {
+            // Programar próximo evento cuando sea el momento
+            const tiempoRestante = eventos.intervaloEntreEventos - tiempoDesdeUltimoEvento;
+            setTimeout(iniciarEventosProgramados, tiempoRestante);
+            return;
+        }
+    }
+    
+    // Activar el evento
+    activarEvento(siguienteEvento);
+    
+    // Programar próximo evento
+    setTimeout(iniciarEventosProgramados, eventos.intervaloEntreEventos + siguienteEvento.duracion);
+}
+
+function activarEvento(evento) {
+    eventos.activo = {...evento};
+    eventos.activo.inicio = new Date().getTime();
+    eventos.activo.fin = eventos.activo.inicio + evento.duracion;
+    
+    // Guardar en localStorage
+    localStorage.setItem('eventoActivo', JSON.stringify(eventos.activo));
+    localStorage.setItem('ultimoEvento', JSON.stringify(eventos.activo));
+    
+    // Mostrar notificación
+    mostrarNotificacionEvento(evento);
+    
+    // Establecer temporizador para finalizar el evento
+    eventos.temporizador = setTimeout(() => {
+        finalizarEvento();
+    }, evento.duracion);
+    
+    // Actualizar UI
+    actualizarEventoUI();
+}
+
+function finalizarEvento() {
+    if (!eventos.activo) return;
+    
+    // Mostrar mensaje de finalización
+    document.getElementById("log-combate").textContent += `\n\nEl evento "${eventos.activo.nombre}" ha terminado.`;
+    
+    // Limpiar evento
+    eventos.activo = null;
+    clearTimeout(eventos.temporizador);
+    localStorage.removeItem('eventoActivo');
+    
+    // Actualizar UI
+    actualizarEventoUI();
+}
+
+function aplicarBonusEvento(tipo, cantidad) {
+    if (!eventos.activo) return cantidad;
+    
+    switch(eventos.activo.tipo) {
+        case 'oro':
+            if (tipo === 'oro') return Math.floor(cantidad * eventos.activo.bonus);
+            break;
+        case 'rubies':
+            if (tipo === 'rubies' && Math.random() < eventos.activo.bonus) {
+                return cantidad + 1; // +1 rubí adicional con 30% de probabilidad
+            }
+            break;
+        case 'exp':
+            if (tipo === 'exp') return Math.floor(cantidad * eventos.activo.bonus);
+            break;
+        case 'combo':
+            if (tipo === 'oro') return Math.floor(cantidad * eventos.activo.bonus.oro);
+            if (tipo === 'exp') return Math.floor(cantidad * eventos.activo.bonus.exp);
+            if (tipo === 'rubies' && Math.random() < eventos.activo.bonus.rubies) {
+                return cantidad + 1; // +1 rubí adicional con 20% de probabilidad
+            }
+            break;
+    }
+    
+    return cantidad;
+}
+
+// Modificar la función mostrarNotificacionEvento
+function mostrarNotificacionEvento(evento) {
+    let mensaje = `🎉 **EVENTO ESPECIAL: ${evento.nombre.toUpperCase()}** 🎉\n`;
+    mensaje += `⏳ Duración: 30 minutos\n\n`;
+    mensaje += `${evento.descripcion}\n\n`;
+    
+    switch(evento.tipo) {
+        case 'oro':
+            mensaje += `▸ Todas las recompensas de oro ×${evento.bonus}\n`;
+            break;
+        case 'rubies':
+            mensaje += `▸ +${evento.bonus * 100}% de probabilidad de obtener rubíes\n`;
+            break;
+        case 'exp':
+            mensaje += `▸ Todas las recompensas de experiencia ×${evento.bonus}\n`;
+            break;
+        case 'combo':
+            mensaje += `▸ Oro ×${evento.bonus.oro}, Exp ×${evento.bonus.exp}\n`;
+            mensaje += `▸ +${evento.bonus.rubies * 100}% de probabilidad de rubíes\n`;
+            break;
+        case 'azar':
+            mensaje += `▸ Visita la sección de combate para girar la ruleta\n`;
+            break;
+    }
+    
+    // Mostrar en el log de combate
+    const logCombate = document.getElementById("log-combate");
+    logCombate.textContent = mensaje + (logCombate.textContent ? `\n\n${logCombate.textContent}` : '');
+    
+    // Mostrar notificación emergente
+    const notificacion = document.createElement("div");
+    notificacion.className = "notificacion-evento";
+    notificacion.innerHTML = `
+        <h3>EVENTO ESPECIAL ACTIVO</h3>
+        <h4>${evento.nombre}</h4>
+        <p>${evento.descripcion}</p>
+        <p><strong>Duración:</strong> 30 minutos</p>
+    `;
+    
+    document.body.appendChild(notificacion);
+    
+    // Eliminar la notificación después de 5 segundos
+    setTimeout(() => {
+        notificacion.style.animation = "slideIn 0.5s reverse forwards";
+        setTimeout(() => notificacion.remove(), 500);
+    }, 10000);
+}
+
+function girarRuleta() {
+    if (!eventos.activo || eventos.activo.tipo !== 'azar') {
+        alert("No hay un evento de ruleta activo actualmente.");
+        return;
+    }
+
+    const resultados = [
+        { texto: "¡Ganaste 100 de oro!", oro: 100, exp: 0, rubies: 0 },
+        { texto: "¡Ganaste 50 de experiencia!", oro: 0, exp: 50, rubies: 0 },
+        { texto: "¡Ganaste 1 rubí!", oro: 0, exp: 0, rubies: 1 },
+        { texto: "¡Premio mayor! 200 oro + 2 rubíes", oro: 200, exp: 0, rubies: 2 },
+        { texto: "¡Ganaste 80 de experiencia!", oro: 0, exp: 80, rubies: 0 },
+        { texto: "¡Perdiste 50 de oro...", oro: -50, exp: 0, rubies: 0 },
+        { texto: "Nada esta vez. Sigue intentando!", oro: 0, exp: 0, rubies: 0 },
+        { texto: "¡Ganaste 30 de oro y 30 de experiencia!", oro: 30, exp: 30, rubies: 0 }
+    ];
+
+    const resultado = resultados[Math.floor(Math.random() * resultados.length)];
+    
+    // Aplicar resultados
+    if (resultado.oro > 0 || jugador.oro >= Math.abs(resultado.oro)) {
+        jugador.oro += resultado.oro;
+    }
+    jugador.exp += resultado.exp;
+    jugador.rubies += resultado.rubies;
+    
+    // Mostrar resultado
+    const ruletaContainer = document.getElementById("ruleta-container");
+    ruletaContainer.innerHTML = `
+        <div class="resultado-ruleta">
+            <h3>${resultado.texto}</h3>
+            ${resultado.oro > 0 ? `<p>Oro: +${resultado.oro}</p>` : resultado.oro < 0 ? `<p>Oro: ${resultado.oro}</p>` : ''}
+            ${resultado.exp > 0 ? `<p>Experiencia: +${resultado.exp}</p>` : ''}
+            ${resultado.rubies > 0 ? `<p>Rubíes: +${resultado.rubies}</p>` : ''}
+            <button onclick="cerrarRuleta()">Cerrar</button>
+        </div>
+    `;
+    
+    actualizarUI();
+}
+
+function cerrarRuleta() {
+    document.getElementById("ruleta-container").innerHTML = '';
+}
+
+function actualizarEventoUI() {
+    const container = document.getElementById("evento-activo-container");
+    const info = document.getElementById("evento-activo-info");
+    const timer = document.getElementById("evento-timer");
+    const btnRuletaContainer = document.getElementById("btn-ruleta-container");
+
+    // Limpiar contenedores
+    if (info) info.innerHTML = '';
+    if (timer) timer.textContent = '';
+    
+    // Si hay un evento activo
+    if (eventos.activo) {
+        // Mostrar el panel del evento
+        container.style.display = "block";
+        
+        // Configurar la información del evento
+        info.innerHTML = `
+            <h3>${eventos.activo.nombre}</h3>
+            <p>${eventos.activo.descripcion}</p>
+            <div class="beneficios-evento">
+                ${obtenerBeneficiosEventoHTML(eventos.activo)}
+            </div>
+        `;
+        
+        // Configurar el temporizador
+        const ahora = new Date().getTime();
+        const finEvento = eventos.activo.inicio + eventos.activo.duracion;
+        const tiempoRestante = finEvento - ahora;
+        
+        // Si el evento aún no ha terminado
+        if (tiempoRestante > 0) {
+            // Actualizar el temporizador inmediatamente
+            actualizarTemporizadorEvento(tiempoRestante);
+            
+            // Actualizar el temporizador cada segundo
+            if (eventos.temporizadorUI) {
+                clearInterval(eventos.temporizadorUI);
+            }
+            
+            eventos.temporizadorUI = setInterval(() => {
+                const ahora = new Date().getTime();
+                const tiempoRestante = finEvento - ahora;
+                
+                if (tiempoRestante <= 0) {
+                    clearInterval(eventos.temporizadorUI);
+                    timer.textContent = "Evento terminado";
+                    return;
+                }
+                
+                actualizarTemporizadorEvento(tiempoRestante);
+            }, 1000);
+            
+            // Mostrar botón de ruleta si es el evento de azar
+            if (eventos.activo.tipo === 'azar' && btnRuletaContainer) {
+                btnRuletaContainer.innerHTML = `
+                    <button class="btn-ruleta" onclick="girarRuleta()">
+                        🎡 Girar Ruleta
+                    </button>
+                `;
+            }
+        } else {
+            timer.textContent = "Evento terminado";
+            if (btnRuletaContainer) btnRuletaContainer.innerHTML = '';
+        }
+    } else {
+        // No hay evento activo, ocultar el panel
+        container.style.display = "none";
+        if (btnRuletaContainer) btnRuletaContainer.innerHTML = '';
+        
+        // Limpiar temporizador UI si existe
+        if (eventos.temporizadorUI) {
+            clearInterval(eventos.temporizadorUI);
+            eventos.temporizadorUI = null;
+        }
+    }
+}
+
+// Función auxiliar para actualizar el temporizador
+function actualizarTemporizadorEvento(tiempoRestante) {
+    const timer = document.getElementById("evento-timer");
+    if (!timer) return;
+    
+    const minutos = Math.floor(tiempoRestante / 60000);
+    const segundos = Math.floor((tiempoRestante % 60000) / 1000);
+    
+    timer.innerHTML = `
+        <strong>Tiempo restante:</strong> 
+        ${minutos}:${segundos < 10 ? '0' : ''}${segundos}
+    `;
+}
+
+// Función auxiliar para obtener los beneficios del evento en HTML
+function obtenerBeneficiosEventoHTML(evento) {
+    switch(evento.tipo) {
+        case 'oro':
+            return `<p>💰 <strong>Oro ×${evento.bonus}</strong></p>`;
+        case 'rubies':
+            return `<p>💎 <strong>+${evento.bonus * 100}% rubíes</strong></p>`;
+        case 'exp':
+            return `<p>✨ <strong>Experiencia ×${evento.bonus}</strong></p>`;
+        case 'combo':
+            return `
+                <p>💰 <strong>Oro ×${evento.bonus.oro}</strong></p>
+                <p>✨ <strong>Experiencia ×${evento.bonus.exp}</strong></p>
+                <p>💎 <strong>+${evento.bonus.rubies * 100}% rubíes</strong></p>
+            `;
+        case 'azar':
+            return `<p>🎡 <strong>Gira la ruleta para premios especiales</strong></p>`;
+        default:
+            return '';
+    }
+}
+
+function probarEvento(idEvento) {
+    const evento = eventos.lista.find(e => e.id === idEvento);
+    if (evento) {
+        activarEvento(evento);
+    } else {
+        console.error("Evento no encontrado. IDs disponibles:", eventos.lista.map(e => e.id));
+    }
+}
+
+const eventosActivos = [
+    {
+        id: 1,
+        nombre: "¡Fiebre del Oro!",
+        descripcion: "Todas las recompensas de oro se duplican",
+        tipo: "oro",
+        bonus: 2.0,
+        icono: "💰",
+        activo: false
+    },
+    {
+        id: 2,
+        nombre: "¡Auge de Rubíes!",
+        descripcion: "30% de probabilidad de obtener rubíes adicionales",
+        tipo: "rubies",
+        bonus: 0.3,
+        icono: "💎",
+        activo: false
+    },
+    {
+        id: 3,
+        nombre: "¡Entrenamiento Intensivo!",
+        descripcion: "Doble experiencia en combates",
+        tipo: "exp",
+        bonus: 2.0,
+        icono: "✨",
+        activo: false
+    },
+    {
+        id: 4,
+        nombre: "¡Bonanza Total!",
+        descripcion: "Oro +50%, EXP +50% y 20% de rubíes",
+        tipo: "combo",
+        bonus: {
+            oro: 1.5,
+            exp: 1.5,
+            rubies: 0.2
+        },
+        icono: "🌟",
+        activo: false
+    },
+    {
+        id: 5,
+        nombre: "¡Ruleta de la Fortuna!",
+        descripcion: "Gira para obtener premios o penalizaciones",
+        tipo: "azar",
+        icono: "🎰",
+        activo: false,
+        premios: [
+            { tipo: "oro", cantidad: 200 },
+            { tipo: "rubies", cantidad: 3 },
+            { tipo: "item", rareza: "raro" },
+            { tipo: "penalizacion", texto: "Pierdes 50 de oro" }
+        ]
+    }
+];
+
+    // Sistema de rotación automática
+    let ultimoCambioEvento = localStorage.getItem('ultimoCambioEvento') || 0;
+    const TIEMPO_ROTACION = 3 * 24 * 60 * 60 * 1000; // 3 días en milisegundos
+
+function rotarEvento() {
+    const ahora = Date.now();
+    
+    // Si pasaron 3 días desde el último cambio
+    if (ahora - ultimoCambioEvento >= TIEMPO_ROTACION) {
+        // Desactivar todos los eventos primero
+        eventosActivos.forEach(e => e.activo = false);
+        
+        // Seleccionar evento aleatorio (excepto el último activo para evitar repeticiones)
+        const eventosDisponibles = eventosActivos.filter(e => !e.activo);
+        const eventoAleatorio = eventosDisponibles[Math.floor(Math.random() * eventosDisponibles.length)];
+        
+        eventoAleatorio.activo = true;
+        ultimoCambioEvento = ahora;
+        localStorage.setItem('ultimoCambioEvento', ultimoCambioEvento);
+        
+        console.log(`Nuevo evento activado: ${eventoAleatorio.nombre}`);
+        
+        // Desactivar automáticamente después de 24 horas
+        setTimeout(() => {
+            eventoAleatorio.activo = false;
+            console.log(`Evento ${eventoAleatorio.nombre} desactivado`);
+        }, 24 * 60 * 60 * 1000);
+    }
+}
+
+// Verificar al iniciar el juego
+rotarEvento();
+// Verificar cada hora por si pasaron los 3 días
+setInterval(rotarEvento, 60 * 60 * 1000);
+
+function aplicarBonus(recompensa) {
+    let modificada = {...recompensa};
+    
+    eventosActivos.filter(e => e.activo).forEach(evento => {
+        switch(evento.tipo) {
+            case "oro":
+                modificada.oro = Math.floor(modificada.oro * evento.bonus);
+                break;
+            case "exp":
+                modificada.exp = Math.floor(modificada.exp * evento.bonus);
+                break;
+            case "rubies":
+                if (Math.random() < evento.bonus) modificada.rubies = (modificada.rubies || 0) + 1;
+                break;
+            case "combo":
+                modificada.oro = Math.floor(modificada.oro * evento.bonus.oro);
+                modificada.exp = Math.floor(modificada.exp * evento.bonus.exp);
+                if (Math.random() < evento.bonus.rubies) modificada.rubies = (modificada.rubies || 0) + 1;
+                break;
+        }
+    });
+    
+    return modificada;
+}
+
+function actualizarUIEvento() {
+    const evento = eventosActivos.find(e => e.activo);
+    const contenedor = document.getElementById("evento-activo");
+    
+    if (evento) {
+        contenedor.innerHTML = `
+            <div class="evento-banner" style="border-color: ${getColorPorTipo(evento.tipo)}">
+                <span>${evento.icono} EVENTO ACTIVO</span>
+                <h3>${evento.nombre}</h3>
+                <p>${evento.descripcion}</p>
+                ${evento.tipo === "azar" ? 
+                    '<button onclick="girarRuleta()">GIRAR RUELTA</button>' : 
+                    '<small>Disponible por 24 horas</small>'
+                }
+            </div>
+        `;
+    } else {
+        const tiempoRestante = TIEMPO_ROTACION - (Date.now() - ultimoCambioEvento);
+        const horas = Math.floor((tiempoRestante % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        contenedor.innerHTML = `<p>Próximo evento en ${horas} horas</p>`;
+    }
+}
+
+// Funciones auxiliares:
+function chanceItemConEvento() {
+    const baseChance = 0.2; // 20% base
+    const eventoItems = eventosActivos.find(e => e.activo && e.tipo === "items");
+    return eventoItems ? baseChance * eventoItems.bonus : baseChance;
+}
+
+function calcularRubiesConEvento() {
+    const baseChance = 0.1; // 10% base
+    let chance = baseChance;
+    
+    eventosActivos.filter(e => e.activo).forEach(evento => {
+        if (evento.tipo === "rubies") chance += evento.bonus;
+        if (evento.tipo === "combo") chance += evento.bonus.rubies;
+    });
+    
+    return Math.random() < chance ? 1 : 0;
+}
+
+function aplicarBonificacionesEvento(recompensa) {
+    const modificada = {...recompensa};
+    
+    eventosActivos.filter(e => e.activo).forEach(evento => {
+        switch(evento.tipo) {
+            case "oro":
+                modificada.oro = Math.floor(modificada.oro * evento.bonus);
+                break;
+            case "exp":
+                modificada.exp = Math.floor(modificada.exp * evento.bonus);
+                break;
+            case "combo":
+                if (evento.bonus.oro) modificada.oro = Math.floor(modificada.oro * evento.bonus.oro);
+                if (evento.bonus.exp) modificada.exp = Math.floor(modificada.exp * evento.bonus.exp);
+                break;
+        }
+    });
+    
+    return modificada;
 }
 
 window.addEventListener('load', cargarJuego);
