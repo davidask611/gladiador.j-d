@@ -1,9 +1,9 @@
 // Constantes del juego
 const MAX_INVENTARIO = 30;
-const TIEMPO_RECARGA_COMBATES = 300000; // 5 minutos en ms
-const TIEMPO_CURACION = 120000; // 2 minutos en ms
-const TIEMPO_EVENTO = 1800000; // 30 minutos en ms
-const TIEMPO_ENTRE_EVENTOS = 259200000; // 3 días en ms
+// const TIEMPO_RECARGA_COMBATES = 300000; // 5 minutos en ms
+// const TIEMPO_CURACION = 120000; // 2 minutos en ms
+// const TIEMPO_EVENTO = 1800000; // 30 minutos en ms
+// const TIEMPO_ENTRE_EVENTOS = 259200000; // 3 días en ms
 
 // --- DATOS DEL JUEGO ---
 const jugador = {
@@ -706,27 +706,47 @@ function cargarCombates() {
 }
 
 function actualizarCombatesUI() {
+    // Actualizar contador de combates
     document.getElementById("combate-count").textContent = jugador.combatesDisponibles;
     
-    if (jugador.combatesDisponibles <= 0) {
-        const ahora = new Date().getTime();
-        const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate') || ahora);
-        const tiempoProximoCombate = ultimoCombate + jugador.tiempoRecarga - ahora;
+    const ahora = new Date().getTime();
+    const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate')) || ahora;
+    const tiempoDesdeUltimoCombate = ahora - ultimoCombate;
+    
+    // Calcular cuántos combates se han recuperado desde el último uso
+    const combatesRecuperados = Math.floor(tiempoDesdeUltimoCombate / jugador.tiempoRecarga);
+    
+    if (combatesRecuperados > 0) {
+        // Si hay combates por recuperar
+        jugador.combatesDisponibles = Math.min(
+            jugador.combatesMaximos, 
+            jugador.combatesDisponibles + combatesRecuperados
+        );
         
-        if (tiempoProximoCombate > 0) {
-            const minutos = Math.floor(tiempoProximoCombate / (1000 * 60));
-            const segundos = Math.floor((tiempoProximoCombate % (1000 * 60)) / 1000);
-            
-            document.getElementById("combate-timer").textContent = 
-                `Recarga en ${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
-            
-            setTimeout(actualizarCombatesUI, 1000);
-        }
-    } else {
-        document.getElementById("combate-timer").textContent = '';
+        // Actualizar el último combate con el tiempo sobrante
+        const nuevoUltimoCombate = ultimoCombate + (combatesRecuperados * jugador.tiempoRecarga);
+        localStorage.setItem('ultimoCombate', nuevoUltimoCombate.toString());
+        localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
     }
     
-    // Actualizar estado de los enemigos en la UI
+    // Calcular tiempo para el próximo combate (si no están todos)
+    if (jugador.combatesDisponibles < jugador.combatesMaximos) {
+        const tiempoProximoCombate = jugador.tiempoRecarga - (tiempoDesdeUltimoCombate % jugador.tiempoRecarga);
+        
+        const minutos = Math.floor(tiempoProximoCombate / (1000 * 60));
+        const segundos = Math.floor((tiempoProximoCombate % (1000 * 60)) / 1000);
+        
+        document.getElementById("combate-timer").textContent = 
+            `Recarga en ${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+        
+        // Actualizar cada segundo
+        setTimeout(actualizarCombatesUI, 1000);
+    } else {
+        // Todos los combates recuperados
+        document.getElementById("combate-timer").textContent = 'Completo';
+    }
+    
+    // Actualizar estado de los enemigos en la UI si es necesario
     if (enCombate) {
         actualizarEnemigosUI();
     }
@@ -738,15 +758,18 @@ function usarCombate() {
         localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
         localStorage.setItem('ultimoCombate', new Date().getTime().toString());
         
-        actualizarCombatesUI();
+        actualizarCombatesUI(); // Esto iniciará el temporizador automáticamente
         
-        if (jugador.combatesDisponibles < jugador.combatesMaximos) {
-            setTimeout(actualizarCombatesUI, jugador.tiempoRecarga);
-        }
+        // Elimina este setTimeout ya que actualizarCombatesUI() ahora se maneja sola
+        // if (jugador.combatesDisponibles < jugador.combatesMaximos) {
+        //    setTimeout(actualizarCombatesUI, jugador.tiempoRecarga);
+        // }
+        
         return true;
     }
     return false;
 }
+
 
 // --- FUNCIONES DE INTERFAZ ---
 function mostrarSeccion(seccionId) {
