@@ -4,11 +4,14 @@ const MAX_INVENTARIO = 30;
 // const TIEMPO_CURACION = 120000; // 2 minutos en ms
 // const TIEMPO_EVENTO = 1800000; // 30 minutos en ms
 // const TIEMPO_ENTRE_EVENTOS = 259200000; // 3 días en ms
-
+let tiempoEsperaCombate = 15000; // 15 segundos en milisegundos
+let tiempoUltimoAtaque = 0; // Tiempo del último ataque
+let puedeAtacar = true; // Ya lo tienes declarado
+document.getElementById("atacar-ya").style.display = "none";
 // --- DATOS DEL JUEGO ---
 const jugador = {
     nombre: "Ovak",
-    nivel: 7,
+    nivel: 1,
     vida: 100,
     vidaMax: 100,
     exp: 0,
@@ -120,7 +123,7 @@ const misiones = {
         {
             id: 2,
             titulo: "Matador de Bestias",
-            descripcion: "Derrota 5 enemigos de tipo animal (ratas, lobos, osos).",
+            descripcion: "Derrota 5 enemigos de tipo animal (Spiders, Bull Fighters, Hounds).",
             tipo: "diaria",
             progreso: 0,
             requerido: 5,
@@ -356,19 +359,13 @@ const tiposItems = {
 const enemigosBase = [
     { 
         id: 1,
-        nombre: "Rata gigante", 
+        nombre: "Spider", 
         nivel: [1, 2],
-        vida: 59, 
-        vidaMax: 140,
-        ataque: 2, 
+        vida: 50, 
+        vidaMax: 100,
+        ataque: 3, 
         defensa: 1, 
-        fuerza: 1,
-        habilidad: 2,
-        agilidad: 2,
-        constitucion: 2,
-        carisma: 1,
-        inteligencia: 2,
-        imagen: "enemigo/rata.png",
+        imagen: "enemigo/Spider.png",
         derrotado: false,
         oro: 10,
         exp: 15,
@@ -376,19 +373,13 @@ const enemigosBase = [
     },
     { 
         id: 2,
-        nombre: "Lince salvaje", 
+        nombre: "Budge Dragon", 
         nivel: [2, 5],
-        vida: 118, 
-        vidaMax: 350,
-        ataque: 3, 
-        defensa: 1, 
-        fuerza: 2,
-        habilidad: 3,
-        agilidad: 2,
-        constitucion: 2,
-        carisma: 1,
-        inteligencia: 2,
-        imagen: "enemigo/lince.png",
+        vida: 101, 
+        vidaMax: 200,
+        ataque: 6, 
+        defensa: 3, 
+        imagen: "enemigo/Budge Dragon.png",
         derrotado: false,
         oro: 20,
         exp: 25,
@@ -396,19 +387,13 @@ const enemigosBase = [
     },
     { 
         id: 3,
-        nombre: "Lobo feroz", 
+        nombre: "Bull Fighter", 
         nivel: [4, 8],
-        vida: 237, 
-        vidaMax: 560,
-        ataque: 4, 
-        defensa: 1, 
-        fuerza: 3,
-        habilidad: 2,
-        agilidad: 2,
-        constitucion: 2,
-        carisma: 1,
-        inteligencia: 2,
-        imagen: "enemigo/lobo.png",
+        vida: 201, 
+        vidaMax: 400,
+        ataque: 9, 
+        defensa: 6, 
+        imagen: "enemigo/Bull Fighter.png",
         derrotado: false,
         oro: 35,
         exp: 40,
@@ -416,19 +401,13 @@ const enemigosBase = [
     },
     { 
         id: 4,
-        nombre: "Oso pardo", 
+        nombre: "Hound", 
         nivel: [8, 10],
-        vida: 475, 
-        vidaMax: 700,
-        ataque: 6, 
-        defensa: 3, 
-        fuerza: 5,
-        habilidad: 2,
-        agilidad: 2,
-        constitucion: 4,
-        carisma: 1,
-        inteligencia: 2,
-        imagen: "enemigo/oso.png",
+        vida: 401, 
+        vidaMax: 600,
+        ataque: 12, 
+        defensa: 9, 
+        imagen: "enemigo/Hound.png",
         derrotado: false,
         oro: 50,
         exp: 60,
@@ -438,33 +417,33 @@ const enemigosBase = [
 
 // Ubicaciones con rangos de nivel
 const ubicaciones = {
-    'Bosque Sombrio': { 
+    'Lorencia': { 
         niveles: [1, 10],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     },
-    'Puerto Pirata': { 
+    'Noria': { 
         niveles: [11, 20],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     },
-    'Montañas Nubladas': { 
+    'Dungeon': { 
         niveles: [21, 30],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     },
-    'Cueva del Lobo': { 
+    'Devias': { 
         niveles: [31, 40],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     },
-    'Templo Antiguo': { 
+    'Lost Tower': { 
         niveles: [41, 50],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     },
-    'Pueblo Bárbaro': { 
+    'Atlans': { 
         niveles: [51, 60],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     },
-    'Campamento Bandido': { 
+    'Tarkan': { 
         niveles: [61, 70],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Rata gigante , Lince salvaje , Lobo feroz y Oso pardo)
+        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
     }
 };
 
@@ -1041,10 +1020,6 @@ function actualizarEnemigosUI() {
             <p>Vida: ${enemigo.vida}/${enemigo.vidaMax}</p>
             <p>Ataque: ${enemigo.ataque}</p>
             <p>Defensa: ${enemigo.defensa}</p>
-            <p>Fuerza: ${enemigo.fuerza}</p>
-            <p>Habilidad: ${enemigo.habilidad}</p>
-            <p>Agilidad: ${enemigo.agilidad}</p>
-            <p>Constitución: ${enemigo.constitucion}</p>
         `;
         
         // Solo permite clic si hay combates disponibles y el enemigo no está derrotado
@@ -1056,11 +1031,20 @@ function actualizarEnemigosUI() {
 }
 
 function atacar(indexEnemigo) {
-    let recibioDaño = false;
+    const ahora = Date.now();
+    
+    // Verificar si puede atacar basado en el temporizador
+    if (!puedeAtacar) {
+        const tiempoRestante = Math.ceil((tiempoEsperaCombate - (ahora - tiempoUltimoAtaque))) / 1000;
+        document.getElementById("log-combate").textContent = `Debes esperar ${tiempoRestante} segundos antes de atacar de nuevo.`;
+        return;
+    }
+
     if (!ubicacionActual) {
         console.error("No hay ubicación actual definida");
         return;
     }
+    
     if (jugador.combatesDisponibles <= 0) {
         document.getElementById("log-combate").textContent = "¡No tienes combates disponibles! Espera a que se recarguen.";
         return;
@@ -1075,6 +1059,7 @@ function atacar(indexEnemigo) {
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
     let enemigoVivo = true;
+    let recibioDaño = false;
 
     // Batalla automática hasta que alguien muera
     while (jugadorVivo && enemigoVivo) {
@@ -1121,6 +1106,19 @@ function atacar(indexEnemigo) {
         }
     }
 
+    // Al final del ataque exitoso:
+    tiempoUltimoAtaque = ahora;
+    puedeAtacar = false;
+    
+    // Mostrar el temporizador
+    mostrarTemporizadorEspera();
+    
+    // Permitir atacar de nuevo cuando termine el tiempo
+    setTimeout(() => {
+        puedeAtacar = true;
+        // El mensaje ya lo muestra mostrarTemporizadorEspera()
+    }, tiempoEsperaCombate);
+
     // Actualizar UI
     document.getElementById("log-combate").textContent = log;
     actualizarEnemigosUI();
@@ -1128,13 +1126,43 @@ function atacar(indexEnemigo) {
 
     // Verificar victoria/derrota global
     if (enemigosActuales.every(e => e.derrotado)) {
-        victoria();
+        victoria(recibioDaño);
     } else if (!jugadorVivo) {
         derrota();
     }
     
     verificarCuracionAutomatica();
     actualizarUI();
+}
+
+function mostrarTemporizadorEspera() {
+    const contadorElement = document.getElementById("contador-espera");
+    const barraElement = document.getElementById("barra-espera");
+    const contenedor = document.getElementById("temporizador-espera");
+    
+    if (!contadorElement || !barraElement) return;
+    
+    const ahora = Date.now();
+    const tiempoRestante = tiempoEsperaCombate - (ahora - tiempoUltimoAtaque);
+    const segundos = Math.ceil(tiempoRestante / 1000);
+    
+    if (tiempoRestante > 0) {
+        // Temporizador en progreso
+        contenedor.classList.remove("temporizador-finalizado");
+        contadorElement.textContent = segundos;
+        barraElement.value = segundos;
+        setTimeout(mostrarTemporizadorEspera, 1000);
+    } else {
+        // Temporizador finalizado
+        contenedor.classList.add("temporizador-finalizado");
+        contadorElement.textContent = "0";
+        barraElement.value = 0;
+        
+        // Opcional: Efecto de sonido
+        if (typeof audioAtacarYa !== 'undefined') {
+            audioAtacarYa.play().catch(e => console.log("Audio no disponible:", e));
+        }
+    }
 }
 
 function huir() {
