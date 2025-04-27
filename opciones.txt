@@ -8,8 +8,8 @@ menu: agregar una seccion llamada misiones OK
 
 agregar eventos dinamicos como mas posibilidad de conseguir oro, rubi y experiencia OK
 
-menu: agregar una fabrica para crear objetos solicitando materias primas y agregar un contador de tiempo de lo que tarde el objeto en crearse
-en la fabrica se podra crear "armas, escudo, anillos, casco, pechera, guantes, botas , pendientes y posiones para curarse la vida"
+menu: agregar una fabrica para crear objetos solicitando materias primas y agregar un contador de tiempo de lo que tarde el objeto en crearse OK
+en la fabrica se podra crear "armas, escudo, anillos, casco, pechera, guantes, botas , pendientes y posiones para curarse la vida" OK
 
 la subida de nivel que no te de puntos OK
 
