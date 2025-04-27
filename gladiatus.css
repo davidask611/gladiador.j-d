@@ -823,13 +823,17 @@ button:hover {
 }
 
 .btn-reclamar {
-    background: #27ae60 !important;
-    margin-top: 10px;
-    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 5px;
 }
 
 .btn-reclamar:hover {
-    background: #2ecc71 !important;
+    background-color: #45a049;
 }
 
 /* Responsive */
@@ -959,4 +963,96 @@ button:hover {
     margin-top: 20px;
     padding: 10px 20px;
     font-size: 16px;
+}
+
+/* Estilos para la fábrica */
+.recursos-fabrica {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.fila-recurso {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #444;
+}
+
+.fila-recurso:last-child {
+    border-bottom: none;
+}
+
+.fila-recurso button {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.cola-produccion {
+    background: #2c3e50;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.item-produccion {
+    margin: 10px 0;
+    padding: 10px;
+    background: #34495e;
+    border-radius: 5px;
+}
+
+.item-completado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.temporizador-produccion {
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.lista-recetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.receta-card {
+    background: #34495e;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #f1c40f;
+}
+
+.receta-card h4 {
+    margin-top: 0;
+    color: #f1c40f;
+}
+
+.receta-recursos {
+    margin: 10px 0;
+}
+
+.receta-recursos p {
+    margin: 5px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.receta-recursos .suficiente {
+    color: #2ecc71;
+}
+
+.receta-recursos .insuficiente {
+    color: #e74c3c;
+}
+
+.receta-tiempo {
+    font-style: italic;
+    font-size: 0.9em;
+    margin: 5px 0;
 }

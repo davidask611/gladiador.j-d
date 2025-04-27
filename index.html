@@ -15,12 +15,12 @@
                 <li><button onclick="mostrarSeccion('vista-general')">👤 Vista General</button></li>
                 <li><button onclick="mostrarSeccion('entrenamiento')">🏋️ Entrenamiento</button></li>
                 <li><button onclick="mostrarSeccion('combate')">⚔️ Combate</button></li>
-                <li><button onclick="mostrarSeccion('misiones')">📜 Misiones</button></li>               
-                <li><button onclick="mostrarSeccion('cuenta')">👤 Cuenta</button></li>
+                <li><button onclick="mostrarSeccion('misiones')">📜 Misiones</button></li> 
+                <li><button onclick="mostrarSeccion('fabrica')">🏭 Fábrica</button></li>              
+                <li><button onclick="mostrarSeccion('cuenta')">👤 Cuenta</button></li>  
                 <button onclick="logout()" class="logout-btn">Salir</button>  
             </ul>
         </nav>
-        <!-- <button onclick="logout()" class="logout-btn">Salir</button> -->
     </header>
 
     <!-- Contenido Principal -->
@@ -42,7 +42,7 @@
                     <span class="badge">Rubíes: <span id="rubies-value">0</span></span>
                     <span class="badge" id="victorias">Victorias: 0</span>
                     <!-- Dentro del panel estadisticas-panel, después del badge de victorias -->
-                    <button class="badge" onclick="canjearVictorias()" title="Canjear 5 victorias por 1 rubí">💎 Canjear</button>
+                    <button class="badge" onclick="canjearVictorias()" title="Canjear 10 victorias por 1 rubí">💎 Canjear</button>
                     <span class="badge" id="familia">Familia: Sin clan</span>
                     <br>
                     <br>
@@ -277,6 +277,7 @@
             <div class="panel">
                 <h2>⚔️ Zona de Combate</h2>
                 
+                <!-- Sistema de energía de combate -->
                 <div class="combate-energy">
                     <div class="energy-counter">
                         <span id="combate-count">12</span>/12 Combates
@@ -321,6 +322,60 @@
                 </div>
             </div>
         </div>
+
+        <!-- Fábrica -->
+        <div id="fabrica" class="seccion">
+            <div class="panel">
+                <h2>🏭 Fábrica de Artesanía</h2>
+                
+                <!-- Recursos del jugador -->
+                <div class="recursos-fabrica">
+                    <h3>Tus Recursos</h3>
+                    <div class="fila-recurso">
+                        <span>Madera:</span> <span id="madera-count">0</span>
+                        <button onclick="comprarRecurso('madera', 10, 5)">Comprar 10 (5 oro)</button>
+                    </div>
+                    <div class="fila-recurso">
+                        <span>Mineral:</span> <span id="mineral-count">0</span>
+                        <button onclick="comprarRecurso('mineral', 10, 8)">Comprar 10 (8 oro)</button>
+                    </div>
+                    <div class="fila-recurso">
+                        <span>Pieles:</span> <span id="pieles-count">0</span>
+                        <button onclick="comprarRecurso('pieles', 10, 6)">Comprar 10 (6 oro)</button>
+                    </div>
+                    <div class="fila-recurso">
+                        <span>Gemas:</span> <span id="gemas-count">0</span>
+                        <button onclick="comprarRecurso('gemas', 1, 15)">Comprar 1 (15 oro)</button>
+                    </div>
+                </div>
+                
+                <!-- Cola de producción -->
+                <div class="cola-produccion">
+                    <h3>Cola de Producción</h3>
+                    <div id="cola-produccion-list">
+                        <!-- Los items en producción aparecerán aquí -->
+                        <p>No hay items en producción actualmente</p>
+                    </div>
+                </div>
+                
+                <!-- Recetas disponibles -->
+                <div class="recetas-fabrica">
+                    <h3>Recetas Disponibles</h3>
+                    <div class="filtros-recetas">
+                        <button onclick="filtrarRecetas('todas')" class="activo">Todas</button>
+                        <button onclick="filtrarRecetas('armas')">Armas</button>
+                        <button onclick="filtrarRecetas('armaduras')">Armaduras</button>
+                        <button onclick="filtrarRecetas('accesorios')">Accesorios</button>
+                        <button onclick="filtrarRecetas('pociones')">Pociones</button>
+                    </div>
+                    
+                    <div class="lista-recetas" id="lista-recetas">
+                        <!-- Las recetas se generarán dinámicamente aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Cuenta -->
         <div id="cuenta" class="seccion">
             <div class="panel">
@@ -333,5 +388,6 @@
 
     <script src="gladiatus.js"></script>
     <script src="cuenta.js"></script>
+    <script src="recetas.js"></script>
 </body>
 </html>

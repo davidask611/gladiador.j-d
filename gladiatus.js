@@ -30,7 +30,7 @@ const jugador = {
     vidaPorCuracion: 20,
     intervaloCuracion: null, // Para almacenar el intervalo del temporizador
     tiempoRecarga: 300000, // 5 minutos en milisegundos
-    
+
     statsBase: {
         fuerza: 5,
         habilidad: 5,
@@ -79,7 +79,24 @@ const jugador = {
         carisma: 50,
         inteligencia: 50
     },
-}    
+}  
+
+// Añade estos recursos al objeto jugador
+if (!jugador.recursos) {
+    jugador.recursos = {
+        madera: 0,
+        mineral: 0,
+        pieles: 0,
+        gemas: 0
+    };
+}
+
+if (!jugador.fabrica) {
+    jugador.fabrica = {
+        colaProduccion: [],
+        recetasDesbloqueadas: [1, 2, 3, 4, 5, 6, 7] // IDs de recetas básicas desbloqueadas
+    };
+}
 
 // Cargar datos del jugador si hay un usuario logueado
 const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
@@ -522,6 +539,7 @@ function filtrarInventario(filtro) {
             <img src="${item.img}" alt="${item.nombre}">
             <div class="item-tooltip">
                 <strong>${item.nombre}</strong><br>
+                ${item.tipo === 'pocion' ? `Curación: +${item.curacion}<br>` : ''}                
                 ${item.descripcion}<br>
                 ${Object.entries(item)
                     .filter(([key, val]) => ['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val)
@@ -538,6 +556,12 @@ function filtrarInventario(filtro) {
 function equiparItem(itemId) {
     const item = jugador.inventario.find(i => i.id === itemId);
     if (!item) return;
+
+    // Verificar si es una poción
+    if (item.tipo === 'pocion') {
+        usarPocion(item);
+        return;
+    }
 
     // Verificar nivel del jugador vs nivel del ítem
     if (item.nivel > jugador.nivel) {
@@ -804,6 +828,12 @@ function mostrarSeccion(seccionId) {
         enemigosActuales = [];
         actualizarEnemigosUI();
         document.getElementById("log-combate").textContent = "Selecciona una ubicación para comenzar el combate";
+    }
+
+    if (seccionId === 'fabrica') {
+        actualizarRecursosUI();
+        actualizarColaProduccionUI();
+        filtrarRecetas('todas');
     }
 }
 
@@ -1323,7 +1353,6 @@ function forzarCuracion() {
 
 // --- SISTEMA DE ENTRENAMIENTO ---
 function subirNivel() {
-    actualizarProgresoMisiones('nivel');
     jugador.nivel++;
     jugador.exp = 0;
     jugador.expParaSubir = Math.floor(jugador.expParaSubir * 1.5);
@@ -1336,10 +1365,12 @@ function subirNivel() {
         });
     }
     
-    // Modificar el mensaje de alerta para eliminar la referencia a puntos de entrenamiento
     alert(`¡Subiste al nivel ${jugador.nivel}! +${20 + (jugador.statsBase.constitucion * 2)} de vida máxima.`);
-    actualizarUI();
+    
+    // Actualizar misiones de nivel
     actualizarProgresoMisiones('nivel');
+    
+    actualizarUI();
 }
 
 function mejorarStat(stat) {
@@ -1477,19 +1508,31 @@ function cargarJuego() {
     reiniciarMisiones(); // <-- Reemplazar reiniciarMisionesDiarias() por esto
     actualizarMisionesUI('todas');
     iniciarEventosProgramados();
+    if (jugador.fabrica.colaProduccion.length > 0) {
+        actualizarProduccion();
+    actualizarProgresoMisiones('nivel');
+    }
 }
+
 function actualizarMisionesUI(filtro = 'todas') {
     const lista = document.getElementById("lista-misiones");
     lista.innerHTML = "";
 
     let misionesMostrar = [];
+    
+    // Filtrar misiones basadas en el tipo y si han sido reclamadas
     if (filtro === 'diarias') {
-        misionesMostrar = [...jugador.misiones.diarias];
+        misionesMostrar = [...jugador.misiones.diarias].filter(m => !(m.completada && m.reclamada));
     } else if (filtro === 'historia') {
-        // Mostrar misiones de historia no reclamadas
-        misionesMostrar = jugador.misiones.historia.filter(m => !m.reclamada);
+        misionesMostrar = [...jugador.misiones.historia].filter(m => !(m.completada && m.reclamada));
+    } else if (filtro === 'fabrica') {
+        misionesMostrar = [...jugador.misiones.fabrica].filter(m => !(m.completada && m.reclamada));
     } else {
-        misionesMostrar = [...jugador.misiones.diarias, ...jugador.misiones.historia.filter(m => !m.reclamada)];
+        misionesMostrar = [
+            ...jugador.misiones.diarias,
+            ...jugador.misiones.historia,
+            ...jugador.misiones.fabrica
+        ].filter(m => !(m.completada && m.reclamada));
     }
 
     if (misionesMostrar.length === 0) {
@@ -1548,7 +1591,8 @@ function filtrarMisiones(filtro) {
 
 function reclamarRecompensa(id) {
     let mision = jugador.misiones.diarias.find(m => m.id === id) || 
-                 jugador.misiones.historia.find(m => m.id === id);
+                 jugador.misiones.historia.find(m => m.id === id) ||
+                 jugador.misiones.fabrica.find(m => m.id === id);
     
     if (!mision || !mision.completada) return;
 
@@ -1556,7 +1600,6 @@ function reclamarRecompensa(id) {
     if (mision.recompensa.oro) jugador.oro += mision.recompensa.oro;
     if (mision.recompensa.exp) {
         jugador.exp += mision.recompensa.exp;
-        // Verificar si sube de nivel después de recibir la exp
         if (jugador.exp >= jugador.expParaSubir) {
             subirNivel();
         }
@@ -1567,12 +1610,12 @@ function reclamarRecompensa(id) {
         jugador.inventario.push(item);
     }
 
-    // Eliminar misión diaria o marcar historia como completada (no se elimina)
-    if (mision.tipo === 'diaria') {
-        jugador.misiones.diarias = jugador.misiones.diarias.filter(m => m.id !== id);
-    } else {
-        // Para misiones de historia, las marcamos como "reclamadas" pero no las eliminamos
-        mision.reclamada = true;
+     // Manejar recompensa de receta para misiones de fábrica
+     if (mision.recompensa.receta) {
+        if (!jugador.fabrica.recetasDesbloqueadas.includes(mision.recompensa.receta)) {
+            jugador.fabrica.recetasDesbloqueadas.push(mision.recompensa.receta);
+            alert(`¡Has desbloqueado la receta para ${recetasFabrica.find(r => r.id === mision.recompensa.receta).nombre}!`);
+        }
     }
 
     if (jugador.inventario.length >= MAX_INVENTARIO) {
@@ -1592,9 +1635,19 @@ function reclamarRecompensa(id) {
         const rubiesConBonus = aplicarBonusEvento('rubies', mision.recompensa.rubies);
         jugador.rubies += rubiesConBonus;
     }
-    
 
-    actualizarMisionesUI(document.querySelector(".filtros-misiones button.activo").textContent.toLowerCase());
+    // Eliminar misión (solo diarias y fábrica, historia permanece)
+    if (mision.tipo === 'diaria') {
+        jugador.misiones.diarias = jugador.misiones.diarias.filter(m => m.id !== id);
+    } else if (mision.tipo === 'fabrica') {
+        jugador.misiones.fabrica = jugador.misiones.fabrica.filter(m => m.id !== id);
+    } else {
+        mision.reclamada = true;
+    }    
+
+    // Actualizar UI
+    const filtroActivo = document.querySelector(".filtros-misiones button.activo")?.textContent.toLowerCase() || 'todas';
+    actualizarMisionesUI(filtroActivo);
     actualizarUI();
 }
 
@@ -1667,7 +1720,22 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
         // Misiones de subir de nivel
         if (tipo === 'nivel') {
             if (mision.descripcion.includes("Alcanza el nivel")) {
-                mision.progreso = Math.max(mision.progreso, jugador.nivel);
+                // Extraer el nivel requerido de la descripción
+                const nivelRequerido = parseInt(mision.descripcion.match(/nivel (\d+)/)[1]);
+                
+                // Actualizar progreso basado en el nivel actual del jugador
+                if (jugador.nivel >= nivelRequerido) {
+                    mision.progreso = mision.requerido; // Forzar completado
+                } else {
+                    mision.progreso = jugador.nivel; // Mostrar progreso actual
+                }
+                
+                // Marcar como completada si se alcanzó el nivel
+                if (jugador.nivel >= nivelRequerido && !mision.completada) {
+                    mision.completada = true;
+                    const card = document.querySelector(`#mision-${mision.id}`);
+                    if (card) card.classList.add('completada-flash');
+                }
             }
         }
 
@@ -1721,6 +1789,44 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
             if (card) card.classList.add('completada-flash');
         }
     });
+
+    // Misiones de fábrica
+    if (tipo === 'fabricarItem') {
+        jugador.misiones.fabrica.forEach(mision => {
+            if (mision.descripcion.includes("Fabrica") && 
+                (!subtipo || mision.descripcion.includes(subtipo))) {
+                mision.progreso += cantidad;
+            }
+        });
+    }
+    
+    if (tipo === 'recurso') {
+        jugador.misiones.fabrica.forEach(mision => {
+            if (mision.descripcion.includes("Consigue") && 
+                mision.descripcion.includes("recurso")) {
+                mision.progreso += cantidad;
+            }
+        });
+    }
+
+    // Verificar completado para misiones de fábrica
+    jugador.misiones.fabrica.forEach(mision => {
+        if (mision.progreso >= mision.requerido && !mision.completada) {
+            mision.completada = true;
+            
+            // Aplicar recompensa de receta si existe
+            if (mision.recompensa.receta) {
+                if (!jugador.fabrica.recetasDesbloqueadas.includes(mision.recompensa.receta)) {
+                    jugador.fabrica.recetasDesbloqueadas.push(mision.recompensa.receta);
+                    alert(`¡Has desbloqueado una nueva receta!`);
+                }
+            }
+            
+            // Efecto visual
+            const card = document.querySelector(`#mision-${mision.id}`);
+            if (card) card.classList.add('completada-flash');
+        }
+    });    
 
     // Actualizar la UI de misiones si estamos en esa sección
     if (document.getElementById('misiones').classList.contains('activa')) {
@@ -2300,6 +2406,46 @@ function aplicarBonificacionesEvento(recompensa) {
     });
     
     return modificada;
+}
+
+function usarPocion(pocion) {
+    // Calcular la cantidad de curación basada en porcentaje de vida máxima
+    const cantidadCuracion = Math.floor(jugador.vidaMax * pocion.curacion);
+    
+    // Calcular cuánta vida se puede recuperar (sin exceder el máximo)
+    const vidaRecuperada = Math.min(jugador.vidaMax - jugador.vida, cantidadCuracion);
+    
+    // Verificar si realmente necesita curación
+    if (vidaRecuperada <= 0) {
+        const logCombate = document.getElementById("log-combate");
+        logCombate.textContent = `💚 No necesitas usar ${pocion.nombre}. Ya tienes la vida al máximo (${jugador.vida}/${jugador.vidaMax}).` + 
+            (logCombate.textContent ? `\n\n${logCombate.textContent}` : '');
+        return;
+    }
+    
+    // Aplicar la curación
+    jugador.vida += vidaRecuperada;
+    
+    // Eliminar la poción del inventario
+    const index = jugador.inventario.findIndex(i => i.id === pocion.id);
+    if (index !== -1) {
+        jugador.inventario.splice(index, 1);
+    }
+    
+    // Mostrar mensaje
+    const porcentajeCurado = (pocion.curacion * 100).toFixed(0);
+    const logCombate = document.getElementById("log-combate");
+    logCombate.textContent = `💚 Has usado ${pocion.nombre} y recuperado ${vidaRecuperada} vida (${porcentajeCurado}% de tu vida máxima).` + 
+        (logCombate.textContent ? `\n\n${logCombate.textContent}` : '');
+    
+    // Actualizar la UI
+    actualizarUI();
+    
+    // Detener la curación automática si estamos al máximo
+    if (jugador.vida >= jugador.vidaMax && jugador.intervaloCuracion) {
+        clearInterval(jugador.intervaloCuracion);
+        document.getElementById("curacion-timer").textContent = "Completo";
+    }
 }
 
 window.addEventListener('load', cargarJuego);
