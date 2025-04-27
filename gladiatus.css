@@ -1056,3 +1056,56 @@ button:hover {
     font-size: 0.9em;
     margin: 5px 0;
 }
+
+/* Estilos para el pie de página FIJO */
+.footer {
+    background: #2c3e50;
+    padding: 15px 20px;
+    border-top: 2px solid #e74c3c;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.footer-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+}
+
+.footer-list li {
+    color: #bdc3c7;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+/* Añade margen al contenido principal para que no quede detrás del footer */
+.contenido-principal {
+    margin-bottom: 70px; /* Ajusta según la altura de tu footer */
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .footer-list {
+        gap: 10px;
+        flex-direction: row; /* Mantenemos horizontal incluso en móviles */
+        justify-content: space-around;
+    }
+    
+    .footer-list li {
+        font-size: 12px;
+    }
+    
+    .contenido-principal {
+        margin-bottom: 60px;
+    }
+}

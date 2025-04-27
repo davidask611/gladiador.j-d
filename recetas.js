@@ -288,7 +288,9 @@ function iniciarProduccion(recetaId) {
     
     actualizarRecursosUI();
     actualizarColaProduccionUI();
-    actualizarProgresoMisiones('fabricarItem', 1, receta.tipo);
+    
+    // Corregido: Pasamos el tipo de receta como tercer parámetro
+    actualizarProgresoMisiones('fabricarItem', 1, null, receta.tipo);
 }
 
 function actualizarProduccion() {

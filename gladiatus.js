@@ -183,7 +183,7 @@ const misiones = {
         {
             id: 8,
             titulo: "Canje de Victorias",
-            descripcion: "Canjea victorias por rubíes 1 vez.",
+            descripcion: "Canjea victorias por rubies 1 vez.",
             tipo: "diaria",
             progreso: 0,
             requerido: 1,
@@ -335,7 +335,8 @@ const misiones = {
 if (!jugador.misiones) {
     jugador.misiones = {
         diarias: JSON.parse(JSON.stringify(misiones.diarias)),
-        historia: JSON.parse(JSON.stringify(misiones.historia))
+        historia: JSON.parse(JSON.stringify(misiones.historia)),
+        // fabrica: JSON.parse(JSON.stringify(misionesFabrica)) // Asegúrate de que esto está incluido
     };
 }
 
@@ -1436,7 +1437,7 @@ function comprarCombate() {
             alert("¡Compra exitosa! Has obtenido 1 combate adicional.");
         }
     } else {
-        alert("No tienes suficientes rubíes. Necesitas al menos 1 rubí para comprar un combate.");
+        alert("No tienes suficientes rubies. Necesitas al menos 1 rubí para comprar un combate.");
     }
 }
 
@@ -1446,7 +1447,7 @@ function cargarJuego() {
     // if (datosGuardados) {
     //     const datos = JSON.parse(datosGuardados);
     //     Object.assign(jugador, datos);
-    //     // Inicializar rubíes si no existen en los datos guardados
+    //     // Inicializar rubies si no existen en los datos guardados
     //     if (jugador.rubies === undefined) {
     //         jugador.rubies = 0;
     //     }
@@ -1793,10 +1794,14 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
     // Misiones de fábrica
     if (tipo === 'fabricarItem') {
         jugador.misiones.fabrica.forEach(mision => {
-            if (mision.descripcion.includes("Fabrica") && 
-                (!subtipo || mision.descripcion.includes(subtipo))) {
+            // Misión genérica (ej: "Fabrica 3 items")
+            if (mision.descripcion.includes("Fabrica") && mision.descripcion.includes("items")) {
                 mision.progreso += cantidad;
             }
+            // // Misión específica (ej: "Fabrica 5 armas")
+            // else if (mision.descripcion.includes("Fabrica") && subtipo && mision.descripcion.includes(subtipo)) {
+            //     mision.progreso += cantidad;
+            // }
         });
     }
     
@@ -1867,10 +1872,10 @@ const eventos = {
         },
         {
             id: 2,
-            nombre: "¡Auge de Rubíes!",
-            descripcion: "Posibilidad de obtener rubíes al completar misiones y derrotar enemigos.",
+            nombre: "¡Auge de rubies!",
+            descripcion: "Posibilidad de obtener rubies al completar misiones y derrotar enemigos.",
             tipo: "rubies",
-            bonus: 0.3, // Probabilidad de obtener rubíes (30%)
+            bonus: 0.3, // Probabilidad de obtener rubies (30%)
             duracion: 1800000,
             orden: 2
         },
@@ -1886,7 +1891,7 @@ const eventos = {
         {
             id: 4,
             nombre: "¡Bonanza Total!",
-            descripcion: "Oro, rubíes y experiencia aumentados durante el evento.",
+            descripcion: "Oro, rubies y experiencia aumentados durante el evento.",
             tipo: "combo",
             bonus: {
                 oro: 1.5,
@@ -2024,41 +2029,19 @@ function mostrarNotificacionEvento(evento) {
             mensaje += `▸ Todas las recompensas de oro ×${evento.bonus}\n`;
             break;
         case 'rubies':
-            mensaje += `▸ +${evento.bonus * 100}% de probabilidad de obtener rubíes\n`;
+            mensaje += `▸ +${evento.bonus * 100}% de probabilidad de obtener rubies\n`;
             break;
         case 'exp':
             mensaje += `▸ Todas las recompensas de experiencia ×${evento.bonus}\n`;
             break;
         case 'combo':
             mensaje += `▸ Oro ×${evento.bonus.oro}, Exp ×${evento.bonus.exp}\n`;
-            mensaje += `▸ +${evento.bonus.rubies * 100}% de probabilidad de rubíes\n`;
+            mensaje += `▸ +${evento.bonus.rubies * 100}% de probabilidad de rubies\n`;
             break;
         case 'azar':
             mensaje += `▸ Visita la sección de combate para girar la ruleta\n`;
             break;
     }
-    
-    // Mostrar en el log de combate
-    const logCombate = document.getElementById("log-combate");
-    logCombate.textContent = mensaje + (logCombate.textContent ? `\n\n${logCombate.textContent}` : '');
-    
-    // Mostrar notificación emergente
-    const notificacion = document.createElement("div");
-    notificacion.className = "notificacion-evento";
-    notificacion.innerHTML = `
-        <h3>EVENTO ESPECIAL ACTIVO</h3>
-        <h4>${evento.nombre}</h4>
-        <p>${evento.descripcion}</p>
-        <p><strong>Duración:</strong> 30 minutos</p>
-    `;
-    
-    document.body.appendChild(notificacion);
-    
-    // Eliminar la notificación después de 5 segundos
-    setTimeout(() => {
-        notificacion.style.animation = "slideIn 0.5s reverse forwards";
-        setTimeout(() => notificacion.remove(), 500);
-    }, 10000);
 }
 
 function girarRuleta() {
@@ -2071,7 +2054,7 @@ function girarRuleta() {
         { texto: "¡Ganaste 100 de oro!", oro: 100, exp: 0, rubies: 0 },
         { texto: "¡Ganaste 50 de experiencia!", oro: 0, exp: 50, rubies: 0 },
         { texto: "¡Ganaste 1 rubí!", oro: 0, exp: 0, rubies: 1 },
-        { texto: "¡Premio mayor! 200 oro + 2 rubíes", oro: 200, exp: 0, rubies: 2 },
+        { texto: "¡Premio mayor! 200 oro + 2 rubies", oro: 200, exp: 0, rubies: 2 },
         { texto: "¡Ganaste 80 de experiencia!", oro: 0, exp: 80, rubies: 0 },
         { texto: "¡Perdiste 50 de oro...", oro: -50, exp: 0, rubies: 0 },
         { texto: "Nada esta vez. Sigue intentando!", oro: 0, exp: 0, rubies: 0 },
@@ -2094,7 +2077,7 @@ function girarRuleta() {
             <h3>${resultado.texto}</h3>
             ${resultado.oro > 0 ? `<p>Oro: +${resultado.oro}</p>` : resultado.oro < 0 ? `<p>Oro: ${resultado.oro}</p>` : ''}
             ${resultado.exp > 0 ? `<p>Experiencia: +${resultado.exp}</p>` : ''}
-            ${resultado.rubies > 0 ? `<p>Rubíes: +${resultado.rubies}</p>` : ''}
+            ${resultado.rubies > 0 ? `<p>rubies: +${resultado.rubies}</p>` : ''}
             <button onclick="cerrarRuleta()">Cerrar</button>
         </div>
     `;
@@ -2203,14 +2186,14 @@ function obtenerBeneficiosEventoHTML(evento) {
         case 'oro':
             return `<p>💰 <strong>Oro ×${evento.bonus}</strong></p>`;
         case 'rubies':
-            return `<p>💎 <strong>+${evento.bonus * 100}% rubíes</strong></p>`;
+            return `<p>💎 <strong>+${evento.bonus * 100}% rubies</strong></p>`;
         case 'exp':
             return `<p>✨ <strong>Experiencia ×${evento.bonus}</strong></p>`;
         case 'combo':
             return `
                 <p>💰 <strong>Oro ×${evento.bonus.oro}</strong></p>
                 <p>✨ <strong>Experiencia ×${evento.bonus.exp}</strong></p>
-                <p>💎 <strong>+${evento.bonus.rubies * 100}% rubíes</strong></p>
+                <p>💎 <strong>+${evento.bonus.rubies * 100}% rubies</strong></p>
             `;
         case 'azar':
             return `<p>🎡 <strong>Gira la ruleta para premios especiales</strong></p>`;
@@ -2240,8 +2223,8 @@ const eventosActivos = [
     },
     {
         id: 2,
-        nombre: "¡Auge de Rubíes!",
-        descripcion: "30% de probabilidad de obtener rubíes adicionales",
+        nombre: "¡Auge de rubies!",
+        descripcion: "30% de probabilidad de obtener rubies adicionales",
         tipo: "rubies",
         bonus: 0.3,
         icono: "💎",
@@ -2259,7 +2242,7 @@ const eventosActivos = [
     {
         id: 4,
         nombre: "¡Bonanza Total!",
-        descripcion: "Oro +50%, EXP +50% y 20% de rubíes",
+        descripcion: "Oro +50%, EXP +50% y 20% de rubies",
         tipo: "combo",
         bonus: {
             oro: 1.5,

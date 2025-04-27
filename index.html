@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gladiatus RPG</title>
+    <title>Gladiador RPG</title>
     <link rel="stylesheet" href="gladiatus.css">
 </head>
 <body>
     <!-- Header Superior -->
     <header class="header-superior">
-        <h1>Gladiatus RPG</h1>
+        <h1>Gladiador RPG</h1>
         <nav class="menu-principal">
             <ul>
                 <li><button onclick="mostrarSeccion('vista-general')">👤 Vista General</button></li>
@@ -28,11 +28,6 @@
         <!-- Vista General -->
         <div id="vista-general" class="seccion activa">
             <div id="btn-ruleta-container" style="text-align: center; margin: 15px 0;"></div>
-            <div class="panel evento-activo-panel" id="evento-activo-container" style="display: none;">
-                <h2>🎉 Evento Activo</h2>
-                <div id="evento-activo-info"></div>
-                <div class="evento-timer" id="evento-timer"></div>
-            </div>
 
             <!-- Sección de Estadísticas -->
             <div class="panel estadisticas-panel">
@@ -120,7 +115,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Contenedor derecho (inventario + vestuario) -->
             <div class="panel-derecho">
                 <!-- Sección de Vestuario -->
@@ -185,7 +180,13 @@
                 </div>
             </div>
         </div>
-                        
+
+        <div class="panel evento-activo-panel" id="evento-activo-container" style="display: none;width: 80%;margin: 30px auto;">
+            <h2>🎉 Evento Activo</h2>
+            <div id="evento-activo-info"></div>
+            <div class="evento-timer" id="evento-timer"></div>
+        </div>
+        
         <!-- Entrenamiento -->
         <div id="entrenamiento" class="seccion">
             <div class="panel">
@@ -385,6 +386,15 @@
             </div>
         </div>
     </div>
+
+    <!-- Pie de página -->
+    <footer class="footer">
+        <ul class="footer-list">
+            <li>© 2025 Copyright</li>
+            <li>Creado por Joseloo & David</li>
+            <li>Derechos reservados</li>
+        </ul>
+    </footer>
 
     <script src="gladiatus.js"></script>
     <script src="cuenta.js"></script>
