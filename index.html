@@ -16,7 +16,8 @@
                 <li><button onclick="mostrarSeccion('entrenamiento')">🏋️ Entrenamiento</button></li>
                 <li><button onclick="mostrarSeccion('combate')">⚔️ Combate</button></li>
                 <li><button onclick="mostrarSeccion('misiones')">📜 Misiones</button></li> 
-                <li><button onclick="mostrarSeccion('fabrica')">🏭 Fábrica</button></li>              
+                <li><button onclick="mostrarSeccion('fabrica')">🏭 Fábrica</button></li> 
+                <li><button onclick="mostrarSeccion('arena')">🏟️ Arena PvP</button></li>             
                 <li><button onclick="mostrarSeccion('cuenta')">👤 Cuenta</button></li>  
                 <button onclick="logout()" class="logout-btn">Salir</button>  
             </ul>
@@ -277,7 +278,7 @@
         <div id="combate" class="seccion">
             <div class="panel">
                 <h2>⚔️ Zona de Combate</h2>
-                
+
                 <!-- Sistema de energía de combate -->
                 <div class="combate-energy">
                     <div class="energy-counter">
@@ -290,6 +291,13 @@
                 <!-- Menú de ubicaciones -->
                 <div class="ubicaciones-combate">
                     <h3>Ubicaciones de Combate</h3>
+
+                    <div id="temporizador-espera">
+                        <p class="tiempo-restante">Tiempo de espera: <span id="contador-espera">15</span>s</p>
+                        <progress id="barra-espera" value="15" max="15"></progress>
+                        <p id="atacar-ya" class="mensaje-ataque">¡ATACAR YA, GLADIADOR! ⚔️</p>
+                    </div> 
+
                     <p class="nivel-recomendado">Tu nivel: <span id="nivel-jugador">1</span></p>
                     <div class="grid-ubicaciones">
                         <!-- Los botones se generarán dinámicamente aquí -->
@@ -377,6 +385,66 @@
             </div>
         </div>
 
+        <!-- Arena PvP -->
+        <div id="arena" class="seccion">
+            <div class="panel">
+                <h2>🏟️ Arena PvP</h2>
+                <p>Desafía a otros jugadores y sube en el ranking basado en puntos de arena!</p>
+                
+                <!-- Panel de información del jugador -->
+                <div class="puntos-jugador">
+                    <h3>Tus puntos de arena: <span id="puntos-arena">1000</span></h3>
+                    <button onclick="mostrarEstadisticasPvP()" class="btn-estadisticas">📊 Ver mis estadísticas</button>
+                </div>
+                
+                <div class="arena-container">
+                    <!-- Contenedor principal con flexbox -->
+                    <div class="arena-columnas">
+                        <!-- Columna izquierda - Ranking -->
+                        <div class="arena-ranking">
+                            <h3>🏆 Ranking de la Arena</h3>
+                            <div class="combates-restantes">
+                                <p>Combates disponibles hoy: <strong><span id="combates-restantes">5</span>/5</strong></p>
+                                <p id="tiempo-proximo-combate"></p>
+                            </div>
+                            <div id="ranking-arena" class="ranking-list">
+                                <!-- Ranking se cargará dinámicamente -->
+                            </div>
+                        </div>
+                        
+                        <!-- Columna derecha - Oponentes y combate -->
+                        <div class="arena-oponentes">
+                            <div class="oponentes-section">
+                                <h3>⚔️ Selecciona un oponente</h3>
+                                <p class="info-puntos">
+                                    Se muestran oponentes con puntaje similar al tuyo (±150 puntos)
+                                </p>
+                                <div id="lista-oponentes" class="oponentes-list">
+                                    <!-- Oponentes se cargarán dinámicamente -->
+                                </div>
+                            </div>
+                            
+                            <div id="oponente-seleccionado" class="oponente-seleccionado">
+                                <!-- Se mostrará el oponente seleccionado -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Log del combate (ancho completo abajo) -->
+                    <div class="arena-combate">
+                        <h3>📜 Registro del Combate</h3>
+                        <div id="log-arena" class="log-arena">
+                            Selecciona un oponente para comenzar un combate PvP
+                        </div>
+                        <div class="arena-acciones">
+                            <button id="btn-atacar" onclick="iniciarCombatePvP()" disabled>⚔️ Iniciar Combate</button>
+                            <button onclick="actualizarListaOponentes()">🔄 Actualizar lista</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Cuenta -->
         <div id="cuenta" class="seccion">
             <div class="panel">
@@ -399,5 +467,6 @@
     <script src="gladiatus.js"></script>
     <script src="cuenta.js"></script>
     <script src="recetas.js"></script>
+    <script src="arena.js"></script>
 </body>
 </html>

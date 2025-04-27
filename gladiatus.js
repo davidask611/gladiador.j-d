@@ -1,3 +1,36 @@
+// Sistema de Arena PvP (versión mejorada)
+const arena = {
+    ranking: [], // Almacenará los rankings de jugadores
+    tiempoEsperaArena: 30000, // 30 segundos entre combates PvP
+    ultimoCombatePvP: 0,
+    puedeDesafiar: true,
+    puntosPorVictoria: 20, // Puntos base que ganas al vencer
+    puntosPorDerrota: 10, // Puntos base que pierdes al perder
+    puntosBaseOponente: 1000, // Puntos iniciales para nuevos jugadores
+    
+    // Nuevo: Límites de combate
+    combatesDiarios: 5,
+    combatesRestantes: 5,
+    ultimoCombate: null,
+    recargaHoraria: 3600000, // 1 hora en ms
+    
+    // Nuevo: Estadísticas PvP
+    historial: [],
+    rachaVictorias: 0,
+    mayorRacha: 0,
+    totalCombates: 0,
+    totalVictorias: 0,
+    
+    // Nuevo: Balanceo
+    modificadorNivel: 0.05, // 5% por nivel de diferencia
+    rangoPuntos: 150, // ±150 puntos para emparejamiento
+    maxPuntosGanados: 50,
+    minPuntosGanados: 10
+};
+
+let oponenteSeleccionado = null;
+let enCombatePvP = false;
+
 // Constantes del juego
 const MAX_INVENTARIO = 30;
 // const TIEMPO_RECARGA_COMBATES = 300000; // 5 minutos en ms

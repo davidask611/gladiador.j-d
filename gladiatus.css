@@ -1109,3 +1109,195 @@ button:hover {
         margin-bottom: 60px;
     }
 }
+
+/* Estilo para el temporizador */
+#temporizador-espera {
+    margin: auto;
+    width: 20%;
+    text-align: center;
+    padding: 5px;
+}
+
+#temporizador-espera p {
+    margin: 5px 0;
+}
+
+#barra-espera {
+    width: 90%;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Estado inicial - mensaje de ataque oculto */
+#atacar-ya {
+    display: none;
+    color: #ff0000;
+    font-weight: bold;
+    text-transform: uppercase;
+    animation: parpadeo 0.5s infinite alternate;
+    text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+    margin-top: 5px;
+}
+
+/* Animación de parpadeo */
+@keyframes parpadeo {
+    from { opacity: 1; }
+    to { opacity: 0.7; }
+}
+
+/* Cuando el temporizador está activo */
+.tiempo-restante, #barra-espera {
+    display: block;
+}
+
+/* Cuando el temporizador termina */
+.temporizador-finalizado .tiempo-restante,
+.temporizador-finalizado #barra-espera {
+    display: none;
+}
+
+.temporizador-finalizado #atacar-ya {
+    display: block;
+}
+
+/* Estilos para la Arena PvP */
+.arena-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.arena-columnas {
+    display: flex;
+    gap: 20px;
+}
+
+.arena-ranking, .arena-oponentes {
+    flex: 1;
+    border: solid 2px #3c83e7;
+
+}
+
+.puntos-jugador {
+    background: #8e44ad;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 2px solid #f1c40f;
+}
+
+.puntos-jugador h3 {
+    margin: 0;
+    color: #f1c40f;
+}
+
+#puntos-arena {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+}
+
+.btn-estadisticas {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.combates-restantes {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.ranking-list {
+    background: #2c3e50;
+    padding: 15px;
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.oponentes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #2c3e50;
+    border-radius: 8px;
+}
+
+.oponente-seleccionado {
+    background: #34495e;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 4px solid #e74c3c;
+}
+
+.oponente-info {
+    margin-top: 10px;
+}
+
+.btn-combatir {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 15px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-combatir:hover {
+    background: #c0392b;
+}
+
+.log-arena {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    min-height: 150px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-line;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 15px;
+}
+
+.arena-acciones {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+#btn-atacar {
+    background: #e74c3c;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+}
+
+#btn-atacar:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .arena-columnas {
+        flex-direction: column;
+    }
+    
+    .ranking-list, .oponentes-list {
+        max-height: 200px;
+    }
+}
