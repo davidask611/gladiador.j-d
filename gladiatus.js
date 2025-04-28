@@ -1,3 +1,14 @@
+// Configuración inicial de la tienda
+const tienda = {
+    itemsDisponibles: [],
+    precioMultiplier: 1.2,
+    tiempoProximosBienes: 0,
+    rebajaActiva: false
+};
+
+// Constantes
+const TIEMPO_ACTUALIZACION_TIENDA = 6 * 60 * 60 * 1000; // 6 horas
+
 // Sistema de Arena PvP (versión mejorada)
 // Variables globales para la arena
 const arena = {
@@ -817,6 +828,12 @@ function mostrarSeccion(seccionId) {
     // Mostrar la sección seleccionada
     document.getElementById(seccionId).classList.add('activa');
     
+    // Inicializaciones específicas de cada sección
+    if (seccionId === 'tienda') {
+        actualizarTiendaUI();
+        actualizarInventarioUI();
+    }
+
     // Si la sección es "misiones", activar el filtro "Todas" por defecto
     if (seccionId === 'misiones') {
         // Remover la clase "activo" de todos los botones de filtro
@@ -1576,6 +1593,8 @@ function cargarJuego() {
         actualizarBotonStat(stat, proximoCosto);
     });
 
+    // Inicializar la tienda
+    inicializarTienda();    
     reiniciarMisiones(); // <-- Reemplazar reiniciarMisionesDiarias() por esto
     actualizarMisionesUI('todas');
     iniciarEventosProgramados();

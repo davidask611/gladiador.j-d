@@ -26,7 +26,8 @@
                 <li><button onclick="mostrarSeccion('combate')">⚔️ Combate</button></li>
                 <li><button onclick="mostrarSeccion('misiones')">📜 Misiones</button></li> 
                 <li><button onclick="mostrarSeccion('fabrica')">🏭 Fábrica</button></li> 
-                <li><button onclick="mostrarSeccion('arena')">🏟️ Arena PvP</button></li>             
+                <li><button onclick="mostrarSeccion('arena')">🏟️ Arena PvP</button></li> 
+                <li><button onclick="mostrarSeccion('tienda')">🏪 Tienda</button></li>            
                 <li><button onclick="mostrarSeccion('cuenta')">👤 Cuenta</button></li>  
                 <button onclick="logout()" class="logout-btn">Salir</button>  
             </ul>
@@ -454,6 +455,64 @@
             </div>
         </div>
 
+        <!-- Tienda -->
+        <div id="tienda" class="seccion" aria-labelledby="tienda-titulo">
+            <div class="panel panel-tienda">
+                <header class="tienda-header">
+                    <h2 id="tienda-titulo" class="tienda-titulo">
+                        <span class="tienda-icono">🏪</span> Tienda 
+                        <span id="tienda-rebaja-badge" class="rebaja-badge" aria-hidden="true">¡REBAJA!</span>
+                    </h2>
+                    
+                    <div id="tienda-temporizador" class="tienda-temporizador" aria-live="polite">
+                        <!-- El temporizador se actualizará dinámicamente -->
+                        <div class="temporizador-cargando">Cargando...</div>
+                    </div>
+                </header>
+                
+                <div class="tienda-contenedor">
+                    <section class="tienda-items-container" aria-labelledby="items-disponibles-titulo">
+                        <h3 id="items-disponibles-titulo" class="visually-hidden">Items disponibles</h3>
+                        <div id="tienda-items" class="tienda-items grid-items" role="list" aria-label="Items disponibles en tienda">
+                            <!-- Items en venta se cargarán dinámicamente -->
+                            <div class="tienda-vacia-mensaje">La tienda está renovando su stock...</div>
+                        </div>
+                    </section>
+                    
+                    <section class="tienda-inventario" aria-labelledby="inventario-titulo">
+                        <header class="inventario-header">
+                            <h3 id="inventario-titulo">
+                                <span class="inventario-icono">🎒</span> 
+                                <span class="inventario-texto">Tu Inventario</span>
+                                <span class="inventario-contador" id="inventario-contador">(0/30)</span>
+                            </h3>
+                            <p class="inventario-instructions">Arrastra items aquí para vender</p>
+                        </header>
+                        
+                        <div id="inventario-tienda-container" class="grid-inventario" role="list" aria-label="Tu inventario">
+                            <!-- Inventario se cargará dinámicamente -->
+                            <div class="inventario-vacio-mensaje">Tu inventario está vacío</div>
+                        </div>
+                    </section>
+                </div>
+                
+                <div class="tienda-footer">
+                    <button id="btn-refrescar-tienda" class="btn btn-secundario" aria-label="Refrescar tienda (cuesta 10 rubíes)">
+                        <span class="btn-icono">🔄</span> Refrescar Tienda (💎10)
+                    </button>
+                    <p class="tienda-leyenda">Los items premium (★) solo se pueden comprar con rubíes</p>
+                </div>
+            </div>
+        </div>
+                
+                <div class="tienda-info">
+                    <p>💡 Arrastra items de la tienda a tu inventario para comprar.</p>
+                    <p>💡 Arrastra items de tu inventario a la tienda para vender.</p>
+                    <p>💡 Los items con 💎 solo se pueden comprar con rubíes.</p>
+                </div>
+            </div>
+        </div>        
+
         <!-- Cuenta -->
         <div id="cuenta" class="seccion">
             <div class="panel">
@@ -477,5 +536,6 @@
     <script src="cuenta.js"></script>
     <script src="recetas.js"></script>
     <script src="arena.js"></script>
+    <script src="tienda.js"></script>
 </body>
 </html>
