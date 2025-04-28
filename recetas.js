@@ -211,10 +211,10 @@ if (!jugador.misiones.fabrica) {
 
 // Funciones de la fábrica
 function comprarRecurso(tipo, cantidad, costo) {
-    // Verificar si el jugador tiene suficiente oro
-    if (jugador.oro >= costo) {
-        // Restar el oro
-        jugador.oro -= costo;
+    // Verificar si el jugador tiene suficiente rubies
+    if (jugador.rubies >= costo) {
+        // Restar el costo de rubies
+        jugador.rubies -= costo;
         
         // Añadir el recurso (asegúrate que jugador.recursos existe)
         if (!jugador.recursos) {
@@ -237,9 +237,9 @@ function comprarRecurso(tipo, cantidad, costo) {
         actualizarProgresoMisiones('recurso', cantidad);
         
         // Mensaje de confirmación
-        console.log(`Compra exitosa: ${cantidad} ${tipo} por ${costo} oro`);
+        console.log(`Compra exitosa: ${cantidad} ${tipo} por ${costo} rubies.`);
     } else {
-        alert(`No tienes suficiente oro. Necesitas ${costo} oro (tienes ${jugador.oro}).`);
+        alert(`No tienes suficiente rubies. Necesitas ${costo} rubies (tienes ${jugador.rubies}).`);
     }
 }
 
