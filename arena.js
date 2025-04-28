@@ -9,11 +9,11 @@ function inicializarArena() {
 function cargarRankingArena() {
     if (arena.ranking.length === 0) {
         arena.ranking = [
-            { nombre: "Gladiador1", nivel: 15, puntos: 1250, stats: { fuerza: 12, agilidad: 8 } },
-            { nombre: "Espartaco", nivel: 20, puntos: 1500, stats: { fuerza: 15, agilidad: 10 } },
-            { nombre: "Maximus", nivel: 18, puntos: 1400, stats: { fuerza: 14, agilidad: 9 } },
-            { nombre: "Leonidas", nivel: 25, puntos: 1800, stats: { fuerza: 18, agilidad: 12 } },
-            { nombre: "Aquiles", nivel: 22, puntos: 1600, stats: { fuerza: 16, agilidad: 11 } }
+            { nombre: "DeathNote", nivel: 82, puntos: 3200 },
+            { nombre: "DAGOVACITY", nivel: 85, puntos: 3100 },
+            { nombre: "RIQUELME", nivel: 84, puntos: 2950 },
+            { nombre: "MauryUnge", nivel: 85, puntos: 2800 },
+            { nombre: "Fabisabalero", nivel: 85, puntos: 2750 }
         ];
         
         if (!arena.ranking.some(j => j.nombre === jugador.nombre)) {
@@ -32,24 +32,26 @@ function cargarRankingArena() {
     arena.ranking.sort((a, b) => b.puntos - a.puntos);
     
     const rankingContainer = document.getElementById("ranking-arena");
-    rankingContainer.innerHTML = "";
-    
-    arena.ranking.forEach((jugadorRank, index) => {
-        const puesto = index + 1;
-        const esJugadorActual = jugadorRank.nombre === jugador.nombre;
-        const claseItem = esJugadorActual ? "item-ranking jugador-actual" : "item-ranking";
-        
-        const item = document.createElement("div");
-        item.className = claseItem;
-        item.innerHTML = `
-            <span class="puesto">${puesto}</span>
-            <span class="nombre">${jugadorRank.nombre}</span>
-            <span class="nivel">Nv. ${jugadorRank.nivel}</span>
-            <span class="puntos">${jugadorRank.puntos} pts</span>
-            ${puesto <= 3 ? '<span class="trofeo">🏆</span>' : ''}
-        `;
-        rankingContainer.appendChild(item);
-    });
+    rankingContainer.innerHTML = `
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Nivel</th>
+                    <th>Puntos</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${arena.ranking.map((jugadorRank, index) => `
+                    <tr class="${jugadorRank.nombre === jugador.nombre ? 'jugador-actual' : ''}">
+                        <td>${index + 1}. ${jugadorRank.nombre}</td>
+                        <td>${jugadorRank.nivel}</td>
+                        <td>${jugadorRank.puntos}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
 }
 
 // Función para actualizar lista de oponentes con balanceo
