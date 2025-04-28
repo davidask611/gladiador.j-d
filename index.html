@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gladiador RPG</title>
     <link rel="stylesheet" href="gladiatus.css">
+    <script>
+        // Verificar autenticación al cargar index.html
+        document.addEventListener('DOMContentLoaded', () => {
+            const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
+            if (!usuarioActual) {
+                window.location.href = 'cuenta.html';
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- Header Superior -->
@@ -444,7 +453,7 @@
                 </div>
             </div>
         </div>
-                    
+
         <!-- Cuenta -->
         <div id="cuenta" class="seccion">
             <div class="panel">

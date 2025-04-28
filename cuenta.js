@@ -139,11 +139,14 @@ function register() {
     }, 1500);
 }
 
-// Cargar datos del usuario si ya está logueado
+
 document.addEventListener('DOMContentLoaded', () => {
-    const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
-    if (usuarioActual) {
-        window.location.href = 'index.html';
+    // Solo redirigir si estamos en cuenta.html y el usuario ya está logueado
+    if (window.location.pathname.includes('cuenta.html')) {
+        const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
+        if (usuarioActual) {
+            window.location.href = 'index.html';
+        }
     }
 });
 
