@@ -1,35 +1,34 @@
 // Sistema de Arena PvP (versión mejorada)
+// Variables globales para la arena
 const arena = {
-    ranking: [], // Almacenará los rankings de jugadores
-    tiempoEsperaArena: 30000, // 30 segundos entre combates PvP
-    ultimoCombatePvP: 0,
-    puedeDesafiar: true,
-    puntosPorVictoria: 20, // Puntos base que ganas al vencer
-    puntosPorDerrota: 10, // Puntos base que pierdes al perder
-    puntosBaseOponente: 1000, // Puntos iniciales para nuevos jugadores
-    
-    // Nuevo: Límites de combate
+    ranking: [],
+    puntosBaseOponente: 1000,
+    rangoPuntos: 150,
     combatesDiarios: 5,
     combatesRestantes: 5,
-    ultimoCombate: null,
-    recargaHoraria: 3600000, // 1 hora en ms
-    
-    // Nuevo: Estadísticas PvP
-    historial: [],
-    rachaVictorias: 0,
-    mayorRacha: 0,
+    ultimoCombatePvP: 0,
+    tiempoEsperaArena: 30000, // 30 segundos
+    modificadorNivel: 0.05,
+    puntosPorVictoria: 20,
+    minPuntosGanados: 10,
+    maxPuntosGanados: 50,
+    puntosPorDerrota: 15,
     totalCombates: 0,
     totalVictorias: 0,
-    
-    // Nuevo: Balanceo
-    modificadorNivel: 0.05, // 5% por nivel de diferencia
-    rangoPuntos: 150, // ±150 puntos para emparejamiento
-    maxPuntosGanados: 50,
-    minPuntosGanados: 10
+    rachaVictorias: 0,
+    mayorRacha: 0,
+    historial: []
 };
 
 let oponenteSeleccionado = null;
 let enCombatePvP = false;
+
+// Función para inicializar la arena
+function inicializarArena() {
+    cargarRankingArena();
+    actualizarListaOponentes();
+    verificarRecargaCombates();
+}
 
 // Constantes del juego
 const MAX_INVENTARIO = 30;
@@ -1088,6 +1087,21 @@ function atacar(indexEnemigo) {
         return;
     }
 
+    // Reiniciar el temporizador visualmente
+    tiempoUltimoAtaque = ahora;
+    puedeAtacar = false;
+    
+    // Restaurar elementos del temporizador
+    const contenedor = document.getElementById("temporizador-espera");
+    contenedor.innerHTML = `
+        <p class="tiempo-restante">Tiempo de espera: <span id="contador-espera">15</span>s</p>
+        <progress id="barra-espera" value="15" max="15"></progress>
+        <p id="atacar-ya" class="mensaje-ataque">¡ATACAR YA, GLADIADOR! ⚔️</p>
+    `;
+    
+    // Iniciar el temporizador nuevamente
+    mostrarTemporizadorEspera();
+
     const enemigo = enemigosActuales[indexEnemigo];
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
@@ -1139,19 +1153,6 @@ function atacar(indexEnemigo) {
         }
     }
 
-    // Al final del ataque exitoso:
-    tiempoUltimoAtaque = ahora;
-    puedeAtacar = false;
-    
-    // Mostrar el temporizador
-    mostrarTemporizadorEspera();
-    
-    // Permitir atacar de nuevo cuando termine el tiempo
-    setTimeout(() => {
-        puedeAtacar = true;
-        // El mensaje ya lo muestra mostrarTemporizadorEspera()
-    }, tiempoEsperaCombate);
-
     // Actualizar UI
     document.getElementById("log-combate").textContent = log;
     actualizarEnemigosUI();
@@ -1180,19 +1181,24 @@ function mostrarTemporizadorEspera() {
     const segundos = Math.ceil(tiempoRestante / 1000);
     
     if (tiempoRestante > 0) {
-        // Temporizador en progreso
+        // Temporizador en progreso (15s)
         contenedor.classList.remove("temporizador-finalizado");
         contadorElement.textContent = segundos;
         barraElement.value = segundos;
         setTimeout(mostrarTemporizadorEspera, 1000);
+        puedeAtacar = false;
     } else {
-        // Temporizador finalizado - reemplazar el contenido
-        const nuevoContenido = document.createElement("div");
-        nuevoContenido.id = "temporizador-espera";
-        nuevoContenido.innerHTML = `<p>¡Ya puedes atacar! ⚔️</p>`;
+        // Mostrar mensaje "Ya puedes atacar" por 5 segundos
+        contenedor.innerHTML = `<p>¡Ya puedes atacar! ⚔️</p>`;
+        puedeAtacar = true;
         
-        // Reemplazar el elemento existente con el nuevo contenido
-        contenedor.replaceWith(nuevoContenido);
+        // Si pasan 5 segundos sin atacar, ocultar mensaje pero mantener puedeAtacar=true
+        setTimeout(() => {
+            if (puedeAtacar) { // Si no ha atacado aún
+                contenedor.innerHTML = ''; // Limpiar mensaje
+                // No reiniciamos el temporizador hasta que el jugador ataque
+            }
+        }, 5000);
         
         // Opcional: Efecto de sonido
         if (typeof audioAtacarYa !== 'undefined') {

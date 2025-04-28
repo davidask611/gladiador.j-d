@@ -1,10 +1,3 @@
-// Función para inicializar la arena
-function inicializarArena() {
-    cargarRankingArena();
-    actualizarListaOponentes();
-    verificarRecargaCombates();
-}
-
 // Función para cargar el ranking
 function cargarRankingArena() {
     if (arena.ranking.length === 0) {
@@ -36,22 +29,35 @@ function cargarRankingArena() {
         <table class="ranking-table">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>Nombre</th>
                     <th>Nivel</th>
                     <th>Puntos</th>
                 </tr>
             </thead>
             <tbody>
-                ${arena.ranking.map((jugadorRank, index) => `
-                    <tr class="${jugadorRank.nombre === jugador.nombre ? 'jugador-actual' : ''}">
-                        <td>${index + 1}. ${jugadorRank.nombre}</td>
-                        <td>${jugadorRank.nivel}</td>
-                        <td>${jugadorRank.puntos}</td>
-                    </tr>
-                `).join('')}
+                ${arena.ranking.map((jugadorRank, index) => {
+                    const esJugadorActual = jugadorRank.nombre === jugador.nombre;
+                    const datosActuales = esJugadorActual ? {
+                        ...jugadorRank,
+                        nivel: jugador.nivel,
+                        puntos: arena.ranking.find(j => j.nombre === jugador.nombre)?.puntos || jugadorRank.puntos
+                    } : jugadorRank;
+                    
+                    return `
+                    <tr class="${esJugadorActual ? 'jugador-actual' : ''}" id="jugador-${datosActuales.nombre.replace(/\s+/g, '-')}">
+                        <td>${index + 1}</td>
+                        <td>${datosActuales.nombre}</td>
+                        <td>${datosActuales.nivel}</td>
+                        <td class="puntos-arena">${datosActuales.puntos}</td>
+                    </tr>`;
+                }).join('')}
             </tbody>
         </table>
     `;
+    
+    // Actualizar contador de combates
+    document.getElementById("combates-restantes").textContent = arena.combatesRestantes;
 }
 
 // Función para actualizar lista de oponentes con balanceo
@@ -121,6 +127,8 @@ function seleccionarOponente(nombreOponente) {
         </div>
         <button onclick="iniciarCombatePvP()" class="btn-combatir">Iniciar Combate</button>
     `;
+    
+    document.getElementById("btn-atacar").disabled = false;
 }
 
 // Función para iniciar combate PvP
@@ -241,6 +249,8 @@ function victoriaPvP() {
     actualizarUI();
     cargarRankingArena();
     actualizarListaOponentes();
+    animarCambioPuntos(jugador.nombre);
+    animarCambioPuntos(oponenteSeleccionado.nombre);
 }
 
 // Función de derrota PvP
@@ -287,6 +297,8 @@ function derrotaPvP() {
     actualizarUI();
     cargarRankingArena();
     actualizarListaOponentes();
+    animarCambioPuntos(jugador.nombre);
+    animarCambioPuntos(oponenteSeleccionado.nombre);
 }
 
 // Función para verificar recarga diaria de combates
@@ -337,7 +349,16 @@ function mostrarEstadisticasPvP() {
     document.getElementById("log-arena").appendChild(statsContainer);
 }
 
+// Función para animar cambios en los puntos
+function animarCambioPuntos(nombreJugador) {
+    const fila = document.querySelector(`.ranking-table tr td:nth-child(2):contains('${nombreJugador}')`)?.parentNode;
+    if (fila) {
+        fila.classList.add('puntos-actualizados');
+        setTimeout(() => fila.classList.remove('puntos-actualizados'), 500);
+    }
+}
+
 // Inicializar arena al cargar
 window.addEventListener('load', () => {
-    setTimeout(inicializarArena, 1000); // Esperar 1 segundo para asegurar carga
+    setTimeout(inicializarArena, 1000);
 });
