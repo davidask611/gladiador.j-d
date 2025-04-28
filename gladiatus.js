@@ -1186,10 +1186,13 @@ function mostrarTemporizadorEspera() {
         barraElement.value = segundos;
         setTimeout(mostrarTemporizadorEspera, 1000);
     } else {
-        // Temporizador finalizado
-        contenedor.classList.add("temporizador-finalizado");
-        contadorElement.textContent = "0";
-        barraElement.value = 0;
+        // Temporizador finalizado - reemplazar el contenido
+        const nuevoContenido = document.createElement("div");
+        nuevoContenido.id = "temporizador-espera";
+        nuevoContenido.innerHTML = `<p>¡Ya puedes atacar! ⚔️</p>`;
+        
+        // Reemplazar el elemento existente con el nuevo contenido
+        contenedor.replaceWith(nuevoContenido);
         
         // Opcional: Efecto de sonido
         if (typeof audioAtacarYa !== 'undefined') {
