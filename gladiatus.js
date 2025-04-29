@@ -652,8 +652,25 @@ function desequiparItem(slot) {
     actualizarUI();
 }
 
+// Función para actualizar el inventario en la Vista General
 function actualizarInventarioUI() {
     filtrarInventario('todos');
+    const inventarioContainer = document.getElementById('items-container');
+    
+    if (!inventarioContainer || !window.jugador?.inventario) return;
+  
+    if (window.jugador.inventario.length === 0) {
+      inventarioContainer.innerHTML = '<p>No tienes items aún.</p>';
+      return;
+    }
+  
+    // Modifica esta parte para que cada item tenga el onclick correcto:
+    inventarioContainer.innerHTML = window.jugador.inventario.map(item => `
+        <div class="item-inventario" onclick="equiparItem(${item.id})">
+            <img src="${item.img}" alt="${item.nombre}">
+            <p>${item.nombre}</p>
+        </div>
+    `).join('');
 }
 
 function actualizarVestuarioUI() {
@@ -1602,6 +1619,7 @@ function cargarJuego() {
         actualizarProduccion();
     actualizarProgresoMisiones('nivel');
     }
+    actualizarInventarioUI(); // Añade esta línea
 }
 
 function actualizarMisionesUI(filtro = 'todas') {
@@ -1805,6 +1823,7 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
             if (mision.descripcion.includes("Consigue") && mision.descripcion.includes("items")) {
                 mision.progreso += cantidad;
             }
+            window.equiparItem = equiparItem; // Al final de la función equiparItem()
         }
 
         // Misiones de subir de nivel

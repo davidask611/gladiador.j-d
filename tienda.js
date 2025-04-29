@@ -145,16 +145,13 @@ function actualizarTiendaUI() {
         <div class="item-inventario">
           <img src="${item.img}" alt="${item.nombre}">
           <p>${item.nombre}</p>
-          <button onclick="venderItem(${item.id})" class="btn-vender">
-            Vender 🪙 ${Math.floor((item.precioOro || item.precioRubies * 50) * 0.7)}
-          </button>
+          <button onclick="venderItem(${item.id})" class="btn-vender">Vender (${Math.floor(item.precioOro * 0.5)}🪙)</button>
         </div>
       `).join('');
     } else {
       contenedorInventario.innerHTML = `
-        <div class="inventario-vacio" style="grid-column: 1 / -1; text-align: center; padding: 20px;">
+        <div class="inventario-vacio">
           <p>No tienes items en tu inventario</p>
-          <p>Compra algunos en la tienda o completa misiones para obtener recompensas</p>
         </div>
       `;
     }
@@ -182,11 +179,12 @@ function inicializarTienda() {
 // Llamar a inicializarTienda cuando la página cargue
 window.addEventListener('load', inicializarTienda);
 
-// Funciones para comprar/vender (mantenidas igual que antes)
+// Función para comprar un item (ya existe, pero la modificamos)
 function comprarItem(itemId) {
   const item = tienda.itemsDisponibles.find(i => i.id === itemId);
   if (!item) return;
-  
+
+  // Verificar si hay suficientes recursos
   if (item.precioRubies > 0) {
     if (window.jugador.rubies < item.precioRubies) {
       alert('No tienes suficientes rubíes para comprar este item');
@@ -200,27 +198,46 @@ function comprarItem(itemId) {
     }
     window.jugador.oro -= item.precioOro;
   }
-  
+
+  // Añadir el item al inventario del jugador
   window.jugador.inventario.push(item);
+
+  // Actualizar ambas UIs
   actualizarTiendaUI();
   actualizarRecursosUI();
+  
+  // Asegurarnos de que la Vista General también se actualice
+  if (typeof actualizarInventarioUI === 'function') {
+    actualizarInventarioUI();
+  }
+
   alert(`¡Has comprado ${item.nombre} con éxito!`);
 }
 
 function venderItem(itemId) {
   const itemIndex = window.jugador.inventario.findIndex(i => i.id === itemId);
   if (itemIndex === -1) return;
-  
+
   const item = window.jugador.inventario[itemIndex];
-  const precioVenta = Math.floor((item.precioOro || item.precioRubies * 50) * 0.7);
-  
-  if (!confirm(`¿Vender ${item.nombre} por ${precioVenta} oro?`)) return;
-  
-  window.jugador.oro += precioVenta;
+  const precioVenta = Math.floor(item.precioOro * 0.5); // Vender al 50% del precio original
+
+  if (!confirm(`¿Vender ${item.nombre} por ${precioVenta} de oro?`)) {
+    return;
+  }
+
+  // Eliminar el item del inventario y dar oro al jugador
   window.jugador.inventario.splice(itemIndex, 1);
+  window.jugador.oro += precioVenta;
+
+  // Actualizar ambas UIs
   actualizarTiendaUI();
   actualizarRecursosUI();
-  alert(`¡Has vendido ${item.nombre} por ${precioVenta} oro!`);
+  
+  if (typeof actualizarInventarioUI === 'function') {
+    actualizarInventarioUI();
+  }
+
+  alert(`¡Has vendido ${item.nombre} por ${precioVenta} de oro!`);
 }
 
 function actualizarRecursosUI() {
