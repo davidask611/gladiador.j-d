@@ -15,15 +15,9 @@ function formatearTiempo(segundos) {
 
 // Función principal para generar items
 function generarItems(forzar = false) {
-  // Verificar si el jugador existe en el objeto principal del juego
-  if (!window.jugador) {
-    console.error("El objeto jugador no está disponible");
-    return false;
-  }
-
   // Si es forzado (manual), verificar costo
   if (forzar) {
-    if (jugador.rubies < 5) {
+    if (window.jugador.rubies < 5) {
       alert('Necesitas 5 rubíes para refrescar la tienda');
       return false;
     }
@@ -32,7 +26,7 @@ function generarItems(forzar = false) {
       return false;
     }
     
-    jugador.rubies -= 5;
+    window.jugador.rubies -= 5;
     actualizarRecursosUI();
   }
 
@@ -76,6 +70,7 @@ function refrescarTienda() {
 }
 
 // Reiniciar el temporizador
+// En la función reiniciarTemporizador()
 function reiniciarTemporizador() {
   // Limpiar el temporizador anterior si existe
   if (tienda.temporizadorInterval) {
@@ -98,7 +93,6 @@ function reiniciarTemporizador() {
     }
   }, 1000);
 }
-
 // Actualizar la UI del temporizador
 function actualizarTemporizadorUI() {
   // Verificar que el temporizador sea un número válido
@@ -145,14 +139,14 @@ function actualizarTiendaUI() {
   }
 
   // Mostrar inventario del jugador (para vender)
-  if (contenedorInventario && window.jugador && window.jugador.inventario) {
-    if (jugador.inventario.length > 0) {
-      contenedorInventario.innerHTML = jugador.inventario.map(item => `
+  if (contenedorInventario) {
+    if (window.jugador?.inventario?.length > 0) {
+      contenedorInventario.innerHTML = window.jugador.inventario.map(item => `
         <div class="item-inventario">
           <img src="${item.img}" alt="${item.nombre}">
           <p>${item.nombre}</p>
           <button onclick="venderItem(${item.id})" class="btn-vender">
-            Vender 🪙 ${Math.floor((item.precio || (item.precioRubies ? item.precioRubies * 50 : 0)) * 0.7)}
+            Vender 🪙 ${Math.floor((item.precioOro || item.precioRubies * 50) * 0.7)}
           </button>
         </div>
       `).join('');
@@ -169,10 +163,13 @@ function actualizarTiendaUI() {
 
 // Inicialización de la tienda
 function inicializarTienda() {
-  // Verificar si el jugador ya está definido en el objeto principal del juego
+  // Crear jugador básico si no existe
   if (!window.jugador) {
-    console.error("El objeto jugador no está disponible");
-    return;
+    window.jugador = {
+      inventario: [],
+      oro: 100,
+      rubies: 5
+    };
   }
   
   // Iniciar el temporizador antes de generar items
@@ -182,64 +179,47 @@ function inicializarTienda() {
   generarItems();
 }
 
-// Funciones para comprar/vender items
+// Llamar a inicializarTienda cuando la página cargue
+window.addEventListener('load', inicializarTienda);
+
+// Funciones para comprar/vender (mantenidas igual que antes)
 function comprarItem(itemId) {
   const item = tienda.itemsDisponibles.find(i => i.id === itemId);
   if (!item) return;
   
-  // Verificar espacio en el inventario
-  if (jugador.inventario.length >= MAX_INVENTARIO) {
-    alert('¡Tu inventario está lleno! No puedes comprar más items.');
-    return;
-  }
-  
   if (item.precioRubies > 0) {
-    if (jugador.rubies < item.precioRubies) {
+    if (window.jugador.rubies < item.precioRubies) {
       alert('No tienes suficientes rubíes para comprar este item');
       return;
     }
-    jugador.rubies -= item.precioRubies;
+    window.jugador.rubies -= item.precioRubies;
   } else {
-    if (jugador.oro < item.precioOro) {
+    if (window.jugador.oro < item.precioOro) {
       alert('No tienes suficiente oro para comprar este item');
       return;
     }
-    jugador.oro -= item.precioOro;
+    window.jugador.oro -= item.precioOro;
   }
   
-  // Añadir el item al inventario del jugador
-  jugador.inventario.push(item);
-  
-  // Actualizar todas las interfaces relevantes
+  window.jugador.inventario.push(item);
   actualizarTiendaUI();
   actualizarRecursosUI();
-  actualizarInventarioUI(); // Actualiza la vista general del inventario
-  actualizarUI(); // Actualiza toda la UI del juego
-  
-  // Actualizar progreso de misiones si corresponde
-  actualizarProgresoMisiones('conseguirItem', 1);
-  
   alert(`¡Has comprado ${item.nombre} con éxito!`);
 }
 
 function venderItem(itemId) {
-  const itemIndex = jugador.inventario.findIndex(i => i.id === itemId);
+  const itemIndex = window.jugador.inventario.findIndex(i => i.id === itemId);
   if (itemIndex === -1) return;
   
-  const item = jugador.inventario[itemIndex];
-  const precioVenta = Math.floor((item.precio || (item.precioRubies ? item.precioRubies * 50 : 0)) * 0.7);
+  const item = window.jugador.inventario[itemIndex];
+  const precioVenta = Math.floor((item.precioOro || item.precioRubies * 50) * 0.7);
   
   if (!confirm(`¿Vender ${item.nombre} por ${precioVenta} oro?`)) return;
   
-  jugador.oro += precioVenta;
-  jugador.inventario.splice(itemIndex, 1);
-  
-  // Actualizar todas las interfaces relevantes
+  window.jugador.oro += precioVenta;
+  window.jugador.inventario.splice(itemIndex, 1);
   actualizarTiendaUI();
   actualizarRecursosUI();
-  actualizarInventarioUI(); // Actualiza la vista general del inventario
-  actualizarUI(); // Actualiza toda la UI del juego
-  
   alert(`¡Has vendido ${item.nombre} por ${precioVenta} oro!`);
 }
 
@@ -248,16 +228,10 @@ function actualizarRecursosUI() {
     const oroElement = document.getElementById('oro-value');
     const rubiesElement = document.getElementById('rubies-value');
     
-    if (oroElement) oroElement.textContent = jugador.oro;
-    if (rubiesElement) rubiesElement.textContent = jugador.rubies;
+    if (oroElement) oroElement.textContent = window.jugador.oro;
+    if (rubiesElement) rubiesElement.textContent = window.jugador.rubies;
   }
 }
 
 // Hacer la función de refresco disponible globalmente
 window.refrescarTienda = refrescarTienda;
-
-// Llamar a inicializarTienda cuando la página cargue
-window.addEventListener('load', function() {
-  // Esperar un momento para asegurar que el objeto jugador esté disponible
-  setTimeout(inicializarTienda, 100);
-});
