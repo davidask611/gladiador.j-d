@@ -1727,56 +1727,58 @@ button:hover {
     transform: scale(0.95);
   }
   
-  /* Mensajes vacíos */
-  .tienda-vacia-mensaje, 
-  .inventario-vacio-mensaje {
-    grid-column: 1 / -1;
+/* Estilos para la tienda */
+.grid-tienda {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+  }
+  
+  .grid-inventario-tienda {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  
+  .item-tienda, .item-inventario {
+    border: 1px solid #444;
+    padding: 10px;
+    border-radius: 8px;
+    background: #2a2a2a;
     text-align: center;
-    color: rgba(255, 255, 255, 0.5);
-    padding: 2rem;
-    font-style: italic;
   }
   
-  /* Footer de tienda */
-  .tienda-footer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    border-top: 1px solid var(--color-borde);
-    background: rgba(0, 0, 0, 0.1);
+  .item-tienda img, .item-inventario img {
+    width: 50px;
+    height: 50px;
   }
   
-  .btn-refrescar-tienda {
-    background: var(--color-destacado);
-    color: white;
+  .btn-oro {
+    background: #d4af37;
+    color: #000;
     border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 2rem;
-    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 4px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s;
   }
   
-  .btn-refrescar-tienda:hover {
-    background: #9b59b6;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  .btn-premium {
+    background: #e91e63;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
   }
   
-  .btn-icono {
-    font-size: 1.2rem;
-  }
-  
-  .tienda-leyenda {
-    margin: 0;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.6);
-    text-align: center;
+  .btn-vender {
+    background: #4CAF50;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
   }
   
   /* ======================
