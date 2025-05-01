@@ -267,315 +267,166 @@ function seleccionarUbicacion(nombreUbicacion) {
     actualizarProgresoMisiones('visitarUbicacion', 1);
 }
 
+// --- FUNCIÓN DE ATAQUE SIMPLIFICADA (TURNO ÚNICO) ---
 function atacar(indexEnemigo) {
-    console.log("[DEBUG] Iniciando función atacar()");
-    console.log("[DEBUG] indexEnemigo:", indexEnemigo);
-    console.log("[DEBUG] enemigosActuales:", enemigosActuales);
-
     const ahora = Date.now();
-    console.log("[DEBUG] Tiempo actual:", ahora);
-    console.log("[DEBUG] tiempoUltimoAtaque:", tiempoUltimoAtaque);
-    console.log("[DEBUG] puedeAtacar:", puedeAtacar);
-
+    
+    // Verificar si puede atacar basado en el temporizador
     if (!puedeAtacar) {
-        console.log("[DEBUG] No se puede atacar - en tiempo de espera");
         const tiempoRestante = Math.ceil((tiempoEsperaCombate - (ahora - tiempoUltimoAtaque))) / 1000;
         document.getElementById("log-combate").textContent = `Debes esperar ${tiempoRestante} segundos antes de atacar de nuevo.`;
         return;
     }
 
-    if (!usarCombate()) {
-        console.log("[DEBUG] usarCombate() devolvió false - no se puede combatir");
+    if (!ubicacionActual) {
+        console.error("No hay ubicación actual definida");
+        return;
+    }
+    
+    if (jugador.combatesDisponibles <= 0) {
+        document.getElementById("log-combate").textContent = "¡No tienes combates disponibles! Espera a que se recarguen.";
         return;
     }
 
-    // Configurar temporizador
+    // Descontar combate al inicio para evitar problemas
+    if (!usarCombate()) {
+        return;
+    }
+
+    // Reiniciar el temporizador visualmente
     tiempoUltimoAtaque = ahora;
     puedeAtacar = false;
-    console.log("[DEBUG] Actualizado tiempoUltimoAtaque y puedeAtacar");
     
+    // Restaurar elementos del temporizador
     const contenedor = document.getElementById("temporizador-espera");
-    console.log("[DEBUG] Contenedor temporizador:", contenedor);
     contenedor.innerHTML = `
         <p class="tiempo-restante">Tiempo de espera: <span id="contador-espera">15</span>s</p>
         <progress id="barra-espera" value="15" max="15"></progress>
         <p id="atacar-ya" class="mensaje-ataque">¡ATACAR YA, GLADIADOR! ⚔️</p>
     `;
-
+    
+    // Iniciar el temporizador nuevamente
     mostrarTemporizadorEspera();
-    console.log("[DEBUG] Temporizador mostrado");
 
-    // Lógica de combate
     const enemigo = enemigosActuales[indexEnemigo];
-    console.log("[DEBUG] Enemigo seleccionado:", enemigo);
     let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
     let jugadorVivo = true;
     let enemigoVivo = true;
     let recibioDaño = false;
 
-    // 1. Calcular daño del jugador
-    const dañoBaseJugador = statsCombate.danoMin + Math.floor(Math.random() * (statsCombate.danoMax - statsCombate.danoMin + 1));
-    const precision = 75 + (jugador.statsBase.habilidad * 5);
-    console.log("[DEBUG] Daño base jugador:", dañoBaseJugador);
-    console.log("[DEBUG] Precisión:", precision);
-    
-    if (Math.random() * 100 <= precision) {
-        console.log("[DEBUG] Ataque exitoso");
-        const dañoJugador = Math.max(1, dañoBaseJugador - enemigo.defensa);
-        enemigo.vida -= dañoJugador;
-        console.log("[DEBUG] Daño infligido:", dañoJugador);
-        console.log("[DEBUG] Vida restante enemigo:", enemigo.vida);
-        log += `🗡️ Golpeas al ${enemigo.nombre} (-${dañoJugador} vida).\n`;
-
-        if (enemigo.vida <= 0) {
-            console.log("[DEBUG] Enemigo derrotado");
-            enemigo.vida = 0;
-            enemigo.derrotado = true;
-            enemigoVivo = false;
-            log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
-            victoria(recibioDaño);
-        }
-    } else {
-        console.log("[DEBUG] Ataque fallido");
-        log += `❌ Fallaste tu ataque contra el ${enemigo.nombre}.\n`;
-    }
-
-    // 2. Turno del enemigo (si sigue vivo)
-    if (enemigoVivo) {
-        console.log("[DEBUG] Turno del enemigo");
-        const evasion = 10 + (jugador.statsBase.agilidad * 3);
-        console.log("[DEBUG] Evasión:", evasion);
-        
-        if (Math.random() * 100 > evasion) {
-            console.log("[DEBUG] Enemigo ataca con éxito");
-            const dañoEnemigo = Math.max(1, enemigo.ataque - statsCombate.armadura);
-            statsCombate.vida -= dañoEnemigo;
-            recibioDaño = true;
-            console.log("[DEBUG] Daño recibido:", dañoEnemigo);
-            console.log("[DEBUG] Vida restante jugador:", statsCombate.vida);
-            log += `🛡️ ${enemigo.nombre} te contraataca (-${dañoEnemigo} vida).\n`;
-
-            if (statsCombate.vida <= 0) {
-                console.log("[DEBUG] Jugador derrotado");
-                statsCombate.vida = 0;
-                jugadorVivo = false;
-                log += `☠️ **¡Has sido derrotado por ${enemigo.nombre}!**\n`;
-                derrota();
+    // Batalla automática hasta que alguien muera
+    while (jugadorVivo && enemigoVivo) {
+        // Turno del jugador
+        const precision = 75 + (jugador.statsBase.habilidad * 5);
+        if (Math.random() * 100 <= precision) {
+            const dañoJugador = Math.max(1, jugador.statsBase.fuerza + jugador.danoMin - enemigo.defensa);
+            enemigo.vida -= dañoJugador;
+            log += `🗡️ Golpeas al ${enemigo.nombre} (-${dañoJugador} vida).\n`;
+            
+            if (enemigo.vida <= 0) {
+                enemigo.vida = 0;
+                enemigo.derrotado = true;
+                enemigoVivo = false;
+                
+                log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
+                log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
+                
+                victoria(recibioDaño);
+                break;
             }
         } else {
-            console.log("[DEBUG] Enemigo falló el ataque");
-            log += `🎯 ¡Esquivaste el ataque del ${enemigo.nombre}!\n`;
+            log += `❌ Fallaste tu ataque contra el ${enemigo.nombre}.\n`;
+        }
+
+        // Turno del enemigo (si sigue vivo)
+        if (enemigoVivo) {
+            const evasion = 10 + (jugador.statsBase.agilidad * 3);
+            if (Math.random() * 100 > evasion) {
+                const dañoEnemigo = Math.max(1, enemigo.ataque - jugador.armadura);
+                jugador.vida -= dañoEnemigo;
+                recibioDaño = true;
+                log += `🛡️ ${enemigo.nombre} te contraataca (-${dañoEnemigo} vida).\n`;
+                
+                if (jugador.vida <= 0) {
+                    jugador.vida = 0;
+                    jugadorVivo = false;
+                    log += `☠️ **¡Has sido derrotado por ${enemigo.nombre}!**\n`;
+                    break;
+                }
+            } else {
+                log += `🎯 ¡Esquivaste el ataque del ${enemigo.nombre}!\n`;
+            }
         }
     }
 
+    // Actualizar UI
     document.getElementById("log-combate").textContent = log;
-    console.log("[DEBUG] Log de combate actualizado");
     actualizarEnemigosUI();
-    console.log("[DEBUG] UI enemigos actualizada");
     actualizarUI();
-    console.log("[DEBUG] UI jugador actualizada");
 
-    // 3. Verificar si todos los enemigos están derrotados
+    // Verificar victoria/derrota global
     if (enemigosActuales.every(e => e.derrotado)) {
-        console.log("[DEBUG] Todos los enemigos derrotados");
         victoria(recibioDaño);
+    } else if (!jugadorVivo) {
+        derrota();
     }
     
-    console.log("[DEBUG] Función atacar() completada");
+    verificarCuracionAutomatica();
+    actualizarUI();
 }
 
+// --- FUNCIÓN VICTORIA SIMPLIFICADA ---
 function victoria(recibioDaño) {
-    console.groupCollapsed('[DEBUG] Ejecutando función victoria()');
-    console.log('[DEBUG] Parámetro recibioDaño:', recibioDaño);
-    console.log('[DEBUG] Estado inicial del jugador:', {
-        oro: jugador.oro,
-        exp: jugador.exp,
-        victorias: jugador.victorias,
-        inventario: jugador.inventario.length
-    });
+    // Calcular recompensas solo del enemigo derrotado
+    const enemigoDerrotado = enemigosActuales.find(e => e.derrotado && !e.recompensaOtorgada);
+    if (!enemigoDerrotado) return;
 
-    // 1. Calcular recompensas
-    console.log('[DEBUG] Paso 1: Calcular recompensas');
-    const enemigosDerrotados = enemigosActuales.filter(enemigo => enemigo.derrotado && !enemigo.recompensaOtorgada);
-    console.log('[DEBUG] Enemigos derrotados sin recompensa:', enemigosDerrotados);
-
-    let recompensaOro = enemigosDerrotados.reduce((total, enemigo) => {
-        enemigo.recompensaOtorgada = true;
-        console.log(`[DEBUG] Otorgando recompensa de ${enemigo.oro} oro por ${enemigo.nombre}`);
-        return total + enemigo.oro;
-    }, 0);
-
-    let recompensaExp = enemigosDerrotados.reduce((total, enemigo) => {
-        console.log(`[DEBUG] Otorgando ${enemigo.exp} exp por ${enemigo.nombre}`);
-        return total + enemigo.exp;
-    }, 0);
-
-    console.log('[DEBUG] Recompensas base - Oro:', recompensaOro, 'Exp:', recompensaExp);
-
-    // 2. Aplicar bonus de carisma
-    console.log('[DEBUG] Paso 2: Aplicar bonus de carisma');
+    enemigoDerrotado.recompensaOtorgada = true;
+    
+    // Bonus de carisma
     const bonusCarisma = 1 + (jugador.statsBase.carisma * 0.1);
-    const oroFinal = Math.floor(recompensaOro * bonusCarisma);
-    const expFinal = Math.floor(recompensaExp * bonusCarisma);
-    console.log('[DEBUG] Bonus carisma:', bonusCarisma, 'Oro final:', oroFinal, 'Exp final:', expFinal);
+    const oroFinal = Math.floor(enemigoDerrotado.oro * bonusCarisma);
+    const expFinal = Math.floor(enemigoDerrotado.exp * bonusCarisma);
 
-
-    // 3. Aplicar recompensas
-    console.log('[DEBUG] Paso 3: Aplicar recompensas');
-    if (oroFinal > 0) {
-        console.log(`[DEBUG] Añadiendo ${oroFinal} oro al jugador`);
-        jugador.oro += oroFinal;
-    } else {
-        console.log('[DEBUG] No se añade oro (oroFinal <= 0)');
-    }
-    
-    if (expFinal > 0) {
-        console.log(`[DEBUG] Añadiendo ${expFinal} exp al jugador`);
-        jugador.exp += expFinal;
-    } else {
-        console.log('[DEBUG] No se añade experiencia (expFinal <= 0)');
-    }
-    
+    // Aplicar recompensas
+    jugador.oro += oroFinal;
+    jugador.exp += expFinal;
     jugador.victorias++;
-    console.log('[DEBUG] Incrementado contador de victorias');
-    // 4. Generar ítem
-    console.log('[DEBUG] Paso 4: Generar ítem aleatorio');
-    if (Math.random() <= 0.2) {
-        console.log('[DEBUG] Probabilidad de item superada (20%)');
-        if (jugador.inventario.length < MAX_INVENTARIO) {
-            console.log('[DEBUG] Hay espacio en inventario');
-            const item = generarItemAleatorio(ubicaciones[ubicacionActual].niveles[0]);
-            console.log('[DEBUG] Item generado:', item);
-            jugador.inventario.push(item);
-            document.getElementById("log-combate").textContent += `\n\n🎁 ¡Has obtenido ${item.nombre}!`;
-            console.log('[DEBUG] Item añadido al inventario');
-        } else {
-            console.log('[DEBUG] Inventario lleno - no se puede añadir item');
-            document.getElementById("log-combate").textContent += `\n\n⚠️ Inventario lleno, no puedes recibir más items`;
-        }
-    } else {
-        console.log('[DEBUG] No se generó item (probabilidad no superada)');
+
+    // Mensaje de victoria
+    let mensaje = document.getElementById("log-combate").textContent;
+    mensaje += `\n\n⚔️ **¡VICTORIA!** ⚔️\n` +
+               `💰 Oro: +${oroFinal} | ✨ Exp: +${expFinal}`;
+
+    // 20% de chance de obtener item
+    if (Math.random() <= 0.2 && jugador.inventario.length < MAX_INVENTARIO) {
+        const item = generarItemAleatorio(ubicaciones[ubicacionActual].niveles[0]);
+        jugador.inventario.push(item);
+        mensaje += `\n🎁 **¡ITEM OBTENIDO!** ${item.nombre}`;
     }
 
-    // 5. Mensaje de victoria
-    console.log('[DEBUG] Paso 5: Crear mensaje de victoria');
-    const mensajeVictoria = `⚔️ **¡VICTORIA!** ⚔️\n\n` +
-                          `▸ 💰 Oro: +${oroFinal} (Total: ${jugador.oro})\n` +
-                          `▸ ✨ Experiencia: +${expFinal} (${jugador.exp}/${jugador.expParaSubir})\n` +
-                          `▸ 🏆 Victorias totales: ${jugador.victorias}`;
-    console.log('[DEBUG] Mensaje de victoria:', mensajeVictoria);
-
-    // 6. Actualizar log
-    console.log('[DEBUG] Paso 6: Actualizar log de combate');
-    const logCombate = document.getElementById("log-combate");
-    console.log('[DEBUG] Contenido actual del log:', logCombate.textContent);
-    logCombate.textContent = logCombate.textContent.split('\n\n')[0] + '\n\n' + mensajeVictoria;
-    console.log('[DEBUG] Nuevo contenido del log:', logCombate.textContent);
-
-    // 7. Actualizar UI
-    console.log('[DEBUG] Paso 7: Actualizar UI');
+    document.getElementById("log-combate").textContent = mensaje;
     actualizarUI();
-    console.log('[DEBUG] UI actualizada');
 
-    // 8. Verificar subida de nivel
-    console.log('[DEBUG] Paso 8: Verificar subida de nivel');
-    console.log(`[DEBUG] Exp actual: ${jugador.exp}/${jugador.expParaSubir}`);
+    // Verificar subida de nivel
     if (jugador.exp >= jugador.expParaSubir) {
-        console.log('[DEBUG] Subiendo nivel...');
         subirNivel();
-    } else {
-        console.log('[DEBUG] No hay suficiente exp para subir nivel');
-        const porcentajeExp = Math.floor((jugador.exp / jugador.expParaSubir) * 100);
-        console.log(`[DEBUG] Porcentaje exp: ${porcentajeExp}%`);
-        document.querySelector(".progreso.exp").style.width = `${porcentajeExp}%`;
-        document.getElementById("exp-porcentaje").textContent = `${porcentajeExp}%`;
     }
 
-    // 9. Finalizar combate
-    console.log('[DEBUG] Paso 9: Finalizar combate');
-    enCombate = false;
-    ubicacionActual = "";
-    console.log('[DEBUG] Estado después de combate - enCombate:', enCombate, 'ubicacionActual:', ubicacionActual);
-
-    // 10. Actualizar misiones
-    console.log('[DEBUG] Paso 10: Actualizar misiones');
-    console.log(`[DEBUG] Actualizando misiones - enemigosDerrotados: ${enemigosDerrotados.length}, recibioDaño: ${recibioDaño}`);
-    actualizarProgresoMisiones('enemigo', enemigosDerrotados.length);
+    // Actualizar misiones
+    actualizarProgresoMisiones('enemigo', 1);
     if (!recibioDaño) {
-        console.log('[DEBUG] Actualizando misión "derrotar sin daño"');
         actualizarProgresoMisiones('enemigoSinDaño', 1);
     }
-
-    console.log('[DEBUG] Estado final del jugador:', {
-        oro: jugador.oro,
-        exp: jugador.exp,
-        victorias: jugador.victorias,
-        inventario: jugador.inventario.length
-    });
-    console.groupEnd();
 }
 
+// --- FUNCIÓN DERROTA SIMPLIFICADA ---
 function derrota() {
-    console.groupCollapsed('[DEBUG] Ejecutando función derrota()');
-    
-    // 1. Verificar estado inicial
-    console.log('[DEBUG] Estado inicial:');
-    console.log('[DEBUG] statsCombate.vida antes:', statsCombate.vida);
-    console.log('[DEBUG] statsCombate.vidaMax:', statsCombate.vidaMax);
-    console.log('[DEBUG] enCombate antes:', enCombate);
-    console.log('[DEBUG] ubicacionActual antes:', ubicacionActual);
-
-    // 2. Restaurar vida al 10%
-    console.log('[DEBUG] Restaurando vida al 10%...');
-    statsCombate.vida = Math.floor(statsCombate.vidaMax * 0.1);
-    console.log('[DEBUG] statsCombate.vida después:', statsCombate.vida);
-    
-    // 3. Verificar que la vida no sea 0
-    if (statsCombate.vida <= 0) {
-        console.warn('[WARNING] La vida del jugador es 0 o menor después de derrota!');
-        statsCombate.vida = 1; // Asegurar al menos 1 de vida
-        console.log('[DEBUG] Ajustada vida a mínimo 1:', statsCombate.vida);
-    }
-
-    // 4. Actualizar mensaje de log
-    console.log('[DEBUG] Actualizando log de combate...');
-    const logCombate = document.getElementById("log-combate");
-    if (!logCombate) {
-        console.error('[ERROR] No se encontró el elemento log-combate');
-    } else {
-        console.log('[DEBUG] Contenido actual del log:', logCombate.textContent);
-        logCombate.textContent += "\n\n☠️ Has sido derrotado. Regresa a la ciudad para curarte!";
-        console.log('[DEBUG] Nuevo contenido del log:', logCombate.textContent);
-    }
-
-    // 5. Cambiar estados del juego
-    console.log('[DEBUG] Actualizando estados del juego...');
+    statsCombate.vida = Math.max(1, Math.floor(statsCombate.vidaMax * 0.1)); // 10% de vida
+    document.getElementById("log-combate").textContent += "\n\n☠️ **DERROTA** - Vida reducida al 10%";
     enCombate = false;
     ubicacionActual = "";
-    console.log('[DEBUG] enCombate después:', enCombate);
-    console.log('[DEBUG] ubicacionActual después:', ubicacionActual);
-
-    // 6. Actualizar UI
-    console.log('[DEBUG] Actualizando interfaz de usuario...');
-    try {
-        actualizarUI();
-        console.log('[DEBUG] UI actualizada correctamente');
-    } catch (error) {
-        console.error('[ERROR] Fallo al actualizar UI:', error);
-    }
-
-    // 7. Verificar estado final
-    console.log('[DEBUG] Estado final:');
-    console.log('[DEBUG] statsCombate:', {
-        vida: statsCombate.vida,
-        vidaMax: statsCombate.vidaMax
-    });
-    console.log('[DEBUG] Estados del juego:', {
-        enCombate: enCombate,
-        ubicacionActual: ubicacionActual
-    });
-
-    console.groupEnd();
+    actualizarUI();
 }
 
 function huir() {
