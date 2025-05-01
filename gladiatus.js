@@ -43,39 +43,18 @@ function inicializarArena() {
 
 // Constantes del juego
 const MAX_INVENTARIO = 30;
-// const TIEMPO_RECARGA_COMBATES = 300000; // 5 minutos en ms
-// const TIEMPO_CURACION = 120000; // 2 minutos en ms
-// const TIEMPO_EVENTO = 1800000; // 30 minutos en ms
-// const TIEMPO_ENTRE_EVENTOS = 259200000; // 3 días en ms
-let tiempoEsperaCombate = 15000; // 15 segundos en milisegundos
-let tiempoUltimoAtaque = 0; // Tiempo del último ataque
-let puedeAtacar = true; // Ya lo tienes declarado
-document.getElementById("atacar-ya").style.display = "none";
 // --- DATOS DEL JUEGO ---
 const jugador = {
     nombre: "Ovak",
     nivel: 1,
-    vida: 100,
-    vidaMax: 100,
     exp: 0,
     expParaSubir: 100,
     oro: 50,
     rubies: 0,  // Nueva propiedad
     victorias: 0,
     familia: "Sin clan",
-    danoMin: 2,  // Cambiado a daño mínimo base
-    danoMax: 2,  // Cambiado a daño máximo base
-    armadura: 0,
-    precision: 75,
-    evasion: 10,
-    combatesDisponibles: 12,
-    combatesMaximos: 12,
-    ultimoCombate: null,
-    ultimaCuracion: null,
-    tiempoCuracion: 120000, // 2 minutos en milisegundos
-    vidaPorCuracion: 20,
-    intervaloCuracion: null, // Para almacenar el intervalo del temporizador
-    tiempoRecarga: 300000, // 5 minutos en milisegundos
+    danoMin: 2,
+    danoMax: 2,
 
     statsBase: {
         fuerza: 5,
@@ -85,7 +64,7 @@ const jugador = {
         carisma: 5,
         inteligencia: 5
     },
-    
+
     statsMaximos: {
         fuerza: 1000,
         habilidad: 1000,
@@ -94,19 +73,24 @@ const jugador = {
         carisma: 1000,
         inteligencia: 1000
     },
-    
+
     equipo: {
+        // Armadura
         casco: null,
         pechera: null,
         guantes: null,
         botas: null,
-        arma: null,
         escudo: null,
+        
+        // Arma (único slot para todas las armas)
+        arma: null,
+        
+        // Accesorios
         anillo1: null,
         anillo2: null,
-        pendiente: null
+        amuleto: null
     },
-    
+
     inventario: [],
 
     mejorasStats: { // Contador de mejoras por stat
@@ -125,7 +109,7 @@ const jugador = {
         carisma: 50,
         inteligencia: 50
     },
-}  
+}
 
 // Añade estos recursos al objeto jugador
 if (!jugador.recursos) {
@@ -267,9 +251,9 @@ const misiones = {
             tipo: "historia",
             progreso: 0,
             requerido: 5,
-            recompensa: { 
-                oro: 100, 
-                exp: 50, 
+            recompensa: {
+                oro: 100,
+                exp: 50,
                 item: {
                     tipo: "arma",
                     nivelMin: 5,
@@ -298,9 +282,9 @@ const misiones = {
             tipo: "historia",
             progreso: 0,
             requerido: 20,
-            recompensa: { 
-                oro: 200, 
-                exp: 80, 
+            recompensa: {
+                oro: 200,
+                exp: 80,
                 item: {
                     tipo: "armadura",
                     nivelMin: 5,
@@ -351,9 +335,9 @@ const misiones = {
             tipo: "historia",
             progreso: 0,
             requerido: 20,
-            recompensa: { 
-                oro: 200, 
-                exp: 100, 
+            recompensa: {
+                oro: 200,
+                exp: 100,
                 item: {
                     tipo: "accesorio",
                     nivelMin: 5,
@@ -386,6 +370,171 @@ if (!jugador.misiones) {
     };
 }
 
+const afijos = {
+    prefijos: [
+      // ====== OFENSIVOS ======
+      { nombre: "Siniestro", efecto: { danoMin: 5, danoMax: 8 }, tipos: ["arma", "hacha", "arco", "baculo"], peso: 15 },
+      { nombre: "Sangriento", efecto: { critico: 0.10 }, tipos: ["arma", "hacha"], peso: 10 },
+      { nombre: "Pesado", efecto: { danoMin: 10, velocidadAtaque: -0.05 }, tipos: ["arma", "hacha"], peso: 8 },
+      { nombre: "Ágil", efecto: { danoMax: 7, evasion: 0.08 }, tipos: ["arma", "arco"], peso: 12 },
+      { nombre: "Mágico", efecto: { inteligencia: 5, danoMin: 3 }, tipos: ["baculo", "anillo"], peso: 10 },
+      { nombre: "Letal", efecto: { danoCritico: 0.15, precision: -5 }, tipos: ["arma"], peso: 5 },
+      { nombre: "Voraz", efecto: { roboVida: 0.03 }, tipos: ["arma", "hacha"], peso: 7 },
+      { nombre: "Cazador", efecto: { danoAnimales: 0.20 }, tipos: ["arma", "arco"], peso: 10 },
+      { nombre: "Gélido", efecto: { ralentizar: 0.10 }, tipos: ["arma", "baculo"], peso: 8 },
+      { nombre: "Ígneo", efecto: { danoFuego: 12 }, tipos: ["arma", "hacha"], peso: 8 },
+      
+      // ====== DEFENSIVOS ======
+      { nombre: "Fortificado", efecto: { defensa: 12, movimiento: -0.03 }, tipos: ["armadura", "escudo"], peso: 15 },
+      { nombre: "Vigilante", efecto: { evasion: 0.12 }, tipos: ["armadura", "botas"], peso: 10 },
+      { nombre: "Divino", efecto: { resistenciaMagica: 0.15 }, tipos: ["armadura", "amuleto"], peso: 8 },
+      { nombre: "Regenerador", efecto: { regeneracionVida: 0.02 }, tipos: ["armadura", "anillo"], peso: 10 },
+      { nombre: "Impenetrable", efecto: { bloqueo: 0.25 }, tipos: ["escudo"], peso: 5 },
+      
+      // ====== HÍBRIDOS ======
+      { nombre: "Maestro", efecto: { fuerza: 3, habilidad: 3 }, tipos: ["arma", "guantes"], peso: 7 },
+      { nombre: "Sabio", efecto: { inteligencia: 4, manaMax: 0.10 }, tipos: ["baculo", "amuleto"], peso: 8 }
+    ],
+    
+    sufijos: [
+      // ====== UTILIDAD ======
+      { nombre: "del Abismo", efecto: { vidaMax: 0.10 }, tipos: ["armadura", "accesorio"], peso: 12 },
+      { nombre: "del Dragón", efecto: { resistenciaFuego: 0.25 }, tipos: ["armadura", "escudo"], peso: 8 },
+      { nombre: "del Zorro", efecto: { evasion: 0.15, roboOro: 0.05 }, tipos: ["botas", "amuleto"], peso: 10 },
+      { nombre: "del Gigante", efecto: { fuerza: 5, velocidadAtaque: -0.07 }, tipos: ["armadura", "arma"], peso: 7 },
+      { nombre: "del Fénix", efecto: { regeneracionVida: 0.04, resistenciaFuego: 0.20 }, tipos: ["armadura", "anillo"], peso: 5 },
+      
+      // ====== ESPECIALIZADOS ======
+      { nombre: "de la Tormenta", efecto: { velocidadAtaque: 0.10 }, tipos: ["arma", "guantes"], peso: 10 },
+      { nombre: "del Berserker", efecto: { danoMin: 8, defensa: -5 }, tipos: ["arma", "hacha"], peso: 6 },
+      { nombre: "del Arquero", efecto: { precision: 15, danoMax: 5 }, tipos: ["arco"], peso: 8 },
+      { nombre: "del Mago", efecto: { inteligencia: 6, manaRegen: 0.03 }, tipos: ["baculo", "amuleto"], peso: 8 },
+      { nombre: "del Ladrón", efecto: { roboOro: 0.10, evasion: 0.10 }, tipos: ["arco", "botas"], peso: 7 },
+      
+      // ====== LEGENDARIOS ======
+      { nombre: "del Héroe", efecto: { todosAtributos: 3 }, tipos: ["arma", "armadura"], peso: 3, rarezaMinima: "raro" },
+      { nombre: "del Caos", efecto: { danoAleatorio: 15 }, tipos: ["arma"], peso: 2, rarezaMinima: "épico" },
+      { nombre: "del Vacío", efecto: { ignorarDefensa: 0.15 }, tipos: ["arma", "baculo"], peso: 2, rarezaMinima: "épico" }
+    ]
+};
+
+const itemsBase = {
+    // ================== ARMADURAS ==================
+    casco: [
+        { nombre: "Casco de cuero", nivelMin: 1, nivelMax: 10, img: "ropa/casco_cuero.png" },
+        { nombre: "Casco de oro", nivelMin: 11, nivelMax: 20, img: "ropa/casco_oro.png" },
+        { nombre: "Casco de plata", nivelMin: 21, nivelMax: 30, img: "ropa/casco_plata.png" },
+        { nombre: "Casco de bronce", nivelMin: 31, nivelMax: 40, img: "ropa/casco_bronce.png" },
+        { nombre: "Yelmo de hierro", nivelMin: 41, nivelMax: 50, img: "ropa/yelmo_hierro.png" },
+        { nombre: "Yelmo de acero", nivelMin: 51, nivelMax: 60, img: "ropa/yelmo_acero.png" },
+        { nombre: "Yelmo de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/yelmo_dragon.png" }
+    ],
+
+    pechera: [
+        { nombre: "Túnica de cuero", nivelMin: 1, nivelMax: 10, img: "ropa/pechera_cuero.png" },
+        { nombre: "Armadura de oro", nivelMin: 11, nivelMax: 20, img: "ropa/pechera_oro.png" },
+        { nombre: "Armadura de plata", nivelMin: 21, nivelMax: 30, img: "ropa/pechera_plata.png" },
+        { nombre: "Armadura de bronce", nivelMin: 31, nivelMax: 40, img: "ropa/pechera_bronce.png" },
+        { nombre: "Armadura de hierro", nivelMin: 41, nivelMax: 50, img: "ropa/pechera_hierro.png" },
+        { nombre: "Armadura de acero", nivelMin: 51, nivelMax: 60, img: "ropa/pechera_acero.png" },
+        { nombre: "Armadura de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/pechera_dragon.png" }
+    ],
+
+    guantes: [
+        { nombre: "Guante de cuero", nivelMin: 1, nivelMax: 10, img: "ropa/guante_cuero.png" },
+        { nombre: "Guante de oro", nivelMin: 11, nivelMax: 20, img: "ropa/guante_oro.png" },
+        { nombre: "Guante de plata", nivelMin: 21, nivelMax: 30, img: "ropa/guante_plata.png" },
+        { nombre: "Guante de bronce", nivelMin: 31, nivelMax: 40, img: "ropa/guante_bronce.png" },
+        { nombre: "Guante de hierro", nivelMin: 41, nivelMax: 50, img: "ropa/guante_hierro.png" },
+        { nombre: "Guante de acero", nivelMin: 51, nivelMax: 60, img: "ropa/guante_acero.png" },
+        { nombre: "Guante de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/guante_dragon.png" }
+    ],
+
+    botas: [
+        { nombre: "Bota de cuero", nivelMin: 1, nivelMax: 10, img: "ropa/bota_cuero.png" },
+        { nombre: "Bota de oro", nivelMin: 11, nivelMax: 20, img: "ropa/bota_oro.png" },
+        { nombre: "Bota de plata", nivelMin: 21, nivelMax: 30, img: "ropa/bota_plata.png" },
+        { nombre: "Bota de bronce", nivelMin: 31, nivelMax: 40, img: "ropa/bota_bronce.png" },
+        { nombre: "Bota de hierro", nivelMin: 41, nivelMax: 50, img: "ropa/bota_hierro.png" },
+        { nombre: "Bota de acero", nivelMin: 51, nivelMax: 60, img: "ropa/bota_acero.png" },
+        { nombre: "Bota de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/bota_dragon.png" }
+    ],
+
+    escudo: [
+        { nombre: "Escudo de madera", nivelMin: 1, nivelMax: 10, img: "ropa/escudo_madera.png" },
+        { nombre: "Escudo de oro", nivelMin: 11, nivelMax: 20, img: "ropa/escudo_oro.png" },
+        { nombre: "Escudo de plata", nivelMin: 21, nivelMax: 30, img: "ropa/escudo_plata.png" },
+        { nombre: "Escudo de bronce", nivelMin: 31, nivelMax: 40, img: "ropa/escudo_bronce.png" },
+        { nombre: "Escudo de hierro", nivelMin: 41, nivelMax: 50, img: "ropa/escudo_hierro.png" },
+        { nombre: "Escudo de acero", nivelMin: 51, nivelMax: 60, img: "ropa/escudo_acero.png" },
+        { nombre: "Escudo de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/escudo_dragon.png" }
+    ],
+
+    // ================== ARMAS ==================
+    arma: [
+        { nombre: "Espada de madera", nivelMin: 1, nivelMax: 10, img: "ropa/espada_madera.png" },
+        { nombre: "Espada de plata", nivelMin: 11, nivelMax: 20, img: "ropa/espada_plata.png" },
+        { nombre: "Espada de bronce", nivelMin: 21, nivelMax: 30, img: "ropa/espada_bronce.png" },
+        { nombre: "Espada de hierro", nivelMin: 31, nivelMax: 40, img: "ropa/espada_hierro.png" },
+        { nombre: "Espada de acero", nivelMin: 41, nivelMax: 50, img: "ropa/espada_acero.png" },
+        { nombre: "Espada de titanio", nivelMin: 51, nivelMax: 60, img: "ropa/espada_titanio.png" },
+        { nombre: "Espada de diamante", nivelMin: 61, nivelMax: 70, img: "ropa/espada_diamante.png" }
+    ],
+
+    hacha: [
+        { nombre: "Hacha de madera", nivelMin: 1, nivelMax: 10, img: "ropa/hacha_madera.png" },
+        { nombre: "Hacha de plata", nivelMin: 11, nivelMax: 20, img: "ropa/hacha_plata.png" },
+        { nombre: "Hacha de bronce", nivelMin: 21, nivelMax: 30, img: "ropa/hacha_bronce.png" },
+        { nombre: "Hacha de hierro", nivelMin: 31, nivelMax: 40, img: "ropa/hacha_hierro.png" },
+        { nombre: "Hacha de acero", nivelMin: 41, nivelMax: 50, img: "ropa/hacha_acero.png" },
+        { nombre: "Hacha de titanio", nivelMin: 51, nivelMax: 60, img: "ropa/hacha_titanio.png" },
+        { nombre: "Hacha de diamante", nivelMin: 61, nivelMax: 70, img: "ropa/hacha_diamante.png" }
+    ],
+
+    arco: [
+        { nombre: "Arco de madera", nivelMin: 1, nivelMax: 10, img: "ropa/arco_madera.png" },
+        { nombre: "Arco de plata", nivelMin: 11, nivelMax: 20, img: "ropa/arco_plata.png" },
+        { nombre: "Arco de bronce", nivelMin: 21, nivelMax: 30, img: "ropa/arco_bronce.png" },
+        { nombre: "Arco de hierro", nivelMin: 31, nivelMax: 40, img: "ropa/arco_hierro.png" },
+        { nombre: "Arco de acero", nivelMin: 41, nivelMax: 50, img: "ropa/arco_acero.png" },
+        { nombre: "Arco de titanio", nivelMin: 51, nivelMax: 60, img: "ropa/arco_titanio.png" },
+        { nombre: "Arco de diamante", nivelMin: 61, nivelMax: 70, img: "ropa/arco_diamante.png" }
+    ],
+
+    baculo: [
+        { nombre: "Báculo de madera", nivelMin: 1, nivelMax: 10, img: "ropa/baculo_madera.png" },
+        { nombre: "Báculo de plata", nivelMin: 11, nivelMax: 20, img: "ropa/baculo_plata.png" },
+        { nombre: "Báculo de bronce", nivelMin: 21, nivelMax: 30, img: "ropa/baculo_bronce.png" },
+        { nombre: "Báculo de hierro", nivelMin: 31, nivelMax: 40, img: "ropa/baculo_hierro.png" },
+        { nombre: "Báculo de acero", nivelMin: 41, nivelMax: 50, img: "ropa/baculo_acero.png" },
+        { nombre: "Báculo de titanio", nivelMin: 51, nivelMax: 60, img: "ropa/baculo_titanio.png" },
+        { nombre: "Báculo de diamante", nivelMin: 61, nivelMax: 70, img: "ropa/baculo_diamante.png" }
+    ],
+
+    // ================== ACCESORIOS ==================
+    anillo: [
+        { nombre: "Anillo de cobre", nivelMin: 1, nivelMax: 20, img: "ropa/anillo_cobre.png" },
+        { nombre: "Anillo de plata", nivelMin: 21, nivelMax: 40, img: "ropa/anillo_plata.png" },
+        { nombre: "Anillo de oro", nivelMin: 41, nivelMax: 60, img: "ropa/anillo_oro.png" },
+        { nombre: "Anillo de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/anillo_dragon.png" }
+    ],
+
+    amuleto: [
+        { nombre: "Amuleto de cobre", nivelMin: 1, nivelMax: 20, img: "ropa/amuleto_cobre.png" },
+        { nombre: "Amuleto de plata", nivelMin: 21, nivelMax: 40, img: "ropa/amuleto_plata.png" },
+        { nombre: "Amuleto de oro", nivelMin: 41, nivelMax: 60, img: "ropa/amuleto_oro.png" },
+        { nombre: "Amuleto de dragón", nivelMin: 61, nivelMax: 70, img: "ropa/amuleto_dragon.png" }
+    ]
+};
+
+const rarezas = [
+    { nombre: "común", probabilidad: 0.60, multiplicadorStats: 1.0, color: "#FFFFFF" },      // +0%
+    { nombre: "poco común", probabilidad: 0.25, multiplicadorStats: 1.15, color: "#2ECC71" }, // +15%
+    { nombre: "raro", probabilidad: 0.10, multiplicadorStats: 1.3, color: "#3498DB" },        // +30%
+    { nombre: "épico", probabilidad: 0.04, multiplicadorStats: 1.5, color: "#9B59B6" },       // +50%
+    { nombre: "legendario", probabilidad: 0.01, multiplicadorStats: 2.0, color: "#F1C40F" }   // +100%
+];
+
 // Tipos de items y sus imágenes
 const tiposItems = {
     casco: { nombre: "Casco", img: "ropa/casco.png" },
@@ -395,182 +544,191 @@ const tiposItems = {
     arma: { nombre: "Arma", img: "ropa/espada.png" },
     escudo: { nombre: "Escudo", img: "ropa/escudo.png" },
     anillo: { nombre: "Anillo", img: "ropa/anillo.png" },
-    pendiente: { nombre: "Pendiente", img: "ropa/pendiente.png" }
+    amuleto: { nombre: "Amuleto", img: "ropa/amuleto.png" }
 };
 
-// Enemigos base (actualizados con nuevas estadísticas)
-const enemigosBase = [
-    { 
-        id: 1,
-        nombre: "Spider", 
-        nivel: [1, 2],
-        vida: 50, 
-        vidaMax: 100,
-        ataque: 3, 
-        defensa: 1, 
-        imagen: "enemigo/Spider.png",
-        derrotado: false,
-        oro: 10,
-        exp: 15,
-        descripcion: "Fuerza: Diminuto, Habilidad: Débil, Agilidad: Muy débil, Constitución: Diminuto, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Insignificante, Daño: Diminuto"
-    },
-    { 
-        id: 2,
-        nombre: "Budge Dragon", 
-        nivel: [2, 5],
-        vida: 101, 
-        vidaMax: 200,
-        ataque: 6, 
-        defensa: 3, 
-        imagen: "enemigo/Budge Dragon.png",
-        derrotado: false,
-        oro: 20,
-        exp: 25,
-        descripcion: "Fuerza: Diminuto, Habilidad: Débil, Agilidad: Muy débil, Constitución: Diminuto, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Insignificante, Daño: Diminuto"
-    },
-    { 
-        id: 3,
-        nombre: "Bull Fighter", 
-        nivel: [4, 8],
-        vida: 201, 
-        vidaMax: 400,
-        ataque: 9, 
-        defensa: 6, 
-        imagen: "enemigo/Bull Fighter.png",
-        derrotado: false,
-        oro: 35,
-        exp: 40,
-        descripcion: "Fuerza: Muy débil, Habilidad: Muy débil, Agilidad: Muy débil, Constitución: Diminuto, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Insignificante, Daño: Insignificante"
-    },
-    { 
-        id: 4,
-        nombre: "Hound", 
-        nivel: [8, 10],
-        vida: 401, 
-        vidaMax: 600,
-        ataque: 12, 
-        defensa: 9, 
-        imagen: "enemigo/Hound.png",
-        derrotado: false,
-        oro: 50,
-        exp: 60,
-        descripcion: "Fuerza: Inferior a la media, Habilidad: Diminuto, Agilidad: Diminuto, Constitución: Débil, Carisma: Diminuto, Inteligencia: Diminuto, Armadura: Muy débil, Daño: Muy débil"
-    }
-];
-
-// Ubicaciones con rangos de nivel
-const ubicaciones = {
-    'Lorencia': { 
-        niveles: [1, 10],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    },
-    'Noria': { 
-        niveles: [11, 20],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    },
-    'Dungeon': { 
-        niveles: [21, 30],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    },
-    'Devias': { 
-        niveles: [31, 40],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    },
-    'Lost Tower': { 
-        niveles: [41, 50],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    },
-    'Atlans': { 
-        niveles: [51, 60],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    },
-    'Tarkan': { 
-        niveles: [61, 70],
-        enemigos: [1, 2, 3, 4] // IDs de enemigos (Spider , Budge Dragon , Bull Fighter y Hound)
-    }
-};
-
-let enemigosActuales = [];
-let enCombate = false;
-let ubicacionActual = "";
 
 // --- FUNCIONES DE ITEMS ---
 function generarItemAleatorio(nivelZona) {
-    const tipos = Object.keys(tiposItems);
-    const tipo = tipos[Math.floor(Math.random() * tipos.length)];
-    const nivel = Math.floor(Math.random() * 10) + nivelZona;
-
-    // Variables para el item
-    let danoMin = 0;
-    let danoMax = 0;
-    let defensa = 0;
-    let descripcion = "";
+    // 1. Definir tipos principales y subtipos
+    const tiposItems = {
+        arma: ['espada', 'hacha', 'arco', 'baculo'],
+        armadura: ['casco', 'pechera', 'guantes', 'botas', 'escudo'],
+        accesorio: ['anillo', 'amuleto']
+    };
     
-    if (tipo === 'arma') {
-        danoMin = Math.floor(Math.random() * 3) + nivel;
-        danoMax = danoMin + Math.floor(Math.random() * 3) + 2;
-        descripcion = `Daño: ${danoMin}-${danoMax}`;
-    } else {
-        defensa = Math.floor(Math.random() * 31) + 20;
-        descripcion = `Defensa: +${defensa}`;
+    // 2. Seleccionar tipo principal (arma, armadura o accesorio)
+    const tipoPrincipal = Object.keys(tiposItems)[Math.floor(Math.random() * 3)];
+    const subtipos = tiposItems[tipoPrincipal];
+    const subtipo = subtipos[Math.floor(Math.random() * subtipos.length)];
+    
+    // 3. Seleccionar item base
+    const itemsFiltrados = itemsBase[subtipo].filter(item => 
+        nivelZona >= item.nivelMin && nivelZona <= item.nivelMax
+    );
+    
+    if (itemsFiltrados.length === 0) {
+        return generarItemGenerico(subtipo, nivelZona);
     }
     
-    // Atributo aleatorio a mejorar
-    const stats = ['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'];
-    const statMejorado = stats[Math.floor(Math.random() * stats.length)];
-    const bonusStat = Math.floor(Math.random() * 11) + 5;
-
-    return {
+    const itemBase = itemsFiltrados[Math.floor(Math.random() * itemsFiltrados.length)];
+    
+    // 4. Determinar rareza
+    const random = Math.random();
+    let rarezaSeleccionada;
+    let acumulado = 0;
+    
+    for (const rareza of rarezas) {
+        acumulado += rareza.probabilidad;
+        if (random <= acumulado) {
+            rarezaSeleccionada = rareza;
+            break;
+        }
+    }
+    
+    // 5. Calcular estadísticas base
+    let stats = calcularStatsPorTipo(subtipo, nivelZona, rarezaSeleccionada.multiplicadorStats);
+    
+    // 6. Crear objeto item inicial
+    const item = {
         id: Date.now(),
-        nombre: `${tiposItems[tipo].nombre} Nv${nivel}`,
-        tipo: tipo,
-        nivel: nivel,
-        defensa: defensa,
-        danoMin: danoMin,
-        danoMax: danoMax,
-        [statMejorado]: bonusStat,
-        img: tiposItems[tipo].img,
-        descripcion: descripcion,
-        precio: nivel * 20 + (defensa + danoMax) * 2
+        nombre: itemBase.nombre,
+        tipo: tipoPrincipal,
+        subtipo: subtipo,
+        nivel: Math.floor(nivelZona * 0.8 + Math.random() * nivelZona * 0.4),
+        rareza: rarezaSeleccionada.nombre,
+        colorRareza: rarezaSeleccionada.color,
+        img: itemBase.img,
+        ...stats,
+        precio: calcularPrecio(stats, rarezaSeleccionada.multiplicadorStats),
+        descripcion: generarDescripcionItem(subtipo, rarezaSeleccionada.nombre)
     };
+    
+    // 7. Aplicar afijos si no es común
+    if (item.rareza !== "común") {
+        item.nombre = generarNombreConAfijos(item);
+    } else {
+        item.nombre = `${item.nombre} [${item.rareza}]`;
+    }
+    
+    return item;
 }
+
+function generarNombreConAfijos(item) {
+    // 1. Filtrar afijos compatibles con el subtipo del item
+    const prefijosValidos = afijos.prefijos.filter(p => 
+        p.tipos.includes(item.subtipo) || p.tipos.includes(item.tipo)
+    );
+    const sufijosValidos = afijos.sufijos.filter(s => 
+        s.tipos.includes(item.subtipo) || s.tipos.includes(item.tipo)
+    );
+
+    // 2. Seleccionar afijos con ponderación
+    const seleccionarAfijo = (afijos) => {
+        const totalPeso = afijos.reduce((sum, a) => sum + a.peso, 0);
+        let random = Math.random() * totalPeso;
+        for (const afijo of afijos) {
+            if (random < afijo.peso) return afijo;
+            random -= afijo.peso;
+        }
+        return afijos[0];
+    };
+
+    const prefijo = prefijosValidos.length > 0 ? seleccionarAfijo(prefijosValidos) : null;
+    const sufijo = sufijosValidos.length > 0 ? seleccionarAfijo(sufijosValidos) : null;
+
+    // 3. Aplicar efectos de afijos
+    let nombreFinal = item.nombre;
+    if (prefijo) {
+        nombreFinal = `${prefijo.nombre} ${nombreFinal}`;
+        Object.assign(item, prefijo.efecto);
+    }
+    if (sufijo) {
+        nombreFinal = `${nombreFinal} ${sufijo.nombre}`;
+        Object.assign(item, sufijo.efecto);
+    }
+
+    return `${nombreFinal} [${item.rareza}]`;
+}
+
+function calcularStatsPorTipo(subtipo, nivel, multiplicadorRareza) {
+    const statsBase = {
+        // Armas
+        espada: { danoMin: 3 + nivel * 2, danoMax: 5 + nivel * 3, fuerza: 1 + nivel * 0.7 },
+        hacha: { danoMin: 4 + nivel * 2.5, danoMax: 6 + nivel * 3.2, constitucion: 1 + nivel * 0.5 },
+        arco: { danoMin: 2 + nivel * 1.8, danoMax: 4 + nivel * 2.8, agilidad: 1 + nivel * 0.8 },
+        baculo: { danoMin: 1 + nivel * 1.5, danoMax: 3 + nivel * 2.5, inteligencia: 1 + nivel * 0.9 },
+        
+        // Armaduras
+        casco: { defensa: 5 + nivel * 2, constitucion: 1 + nivel * 0.5 },
+        pechera: { defensa: 10 + nivel * 3, fuerza: 1 + nivel * 0.3 },
+        guantes: { defensa: 3 + nivel * 1.5, habilidad: 1 + nivel * 0.4 },
+        botas: { defensa: 4 + nivel * 1.8, agilidad: 1 + nivel * 0.6 },
+        escudo: { defensa: 8 + nivel * 2.5, bloqueo: 5 + nivel * 0.2 },
+        
+        // Accesorios
+        anillo: { carisma: 1 + nivel * 0.5, oroExtra: 0.05 * nivel },
+        amuleto: { inteligencia: 1 + nivel * 0.6, expExtra: 0.1 * nivel }
+    };
+
+    const stats = statsBase[subtipo] || {};
+    for (const stat in stats) {
+        stats[stat] = Math.floor(stats[stat] * multiplicadorRareza);
+    }
+
+    return stats;
+}
+
+    // En calcularStatsPorTipo(), definimos mínimos/máximos:
+const limitesStats = {
+    arma: {
+        danoMin: [3, 100],  // Mínimo 3, máximo 100
+        danoMax: [5, 150]
+    },
+    armadura: {
+        defensa: [5, 200]
+    },
+    accesorio: {
+        atributo: [1, 30]   // Ej: +1 a +30 en un stat 
+    }
+};
 
 function filtrarInventario(filtro) {
     const itemsContainer = document.getElementById("items-container");
     itemsContainer.innerHTML = "";
-    
-    let itemsFiltrados = jugador.inventario;
-    
-    if (filtro !== 'todos') {
-        itemsFiltrados = jugador.inventario.filter(item => {
-            if (filtro === 'armas') return item.tipo === 'arma';
-            if (filtro === 'armaduras') return ['casco', 'pechera', 'guantes', 'botas', 'escudo'].includes(item.tipo);
-            if (filtro === 'accesorios') return ['anillo', 'pendiente'].includes(item.tipo);
-            return true;
-        });
-    }
-    
+
+    let itemsFiltrados = jugador.inventario.filter(item => {
+        if (filtro === 'todos') return true;
+        if (filtro === 'armas') return ['arma', 'hacha', 'arco', 'baculo'].includes(item.tipo);
+        if (filtro === 'armaduras') return ['casco', 'pechera', 'guantes', 'botas', 'escudo'].includes(item.tipo);
+        if (filtro === 'accesorios') return ['anillo', 'amuleto'].includes(item.tipo);
+        return false;
+    });
+
     if (itemsFiltrados.length === 0) {
         itemsContainer.innerHTML = "<p>No tienes items de este tipo.</p>";
         return;
     }
-    
+
     itemsFiltrados.forEach(item => {
         const itemElement = document.createElement("div");
         itemElement.className = "item-inventario";
+        itemElement.style.borderColor = item.colorRareza; // Aplicar color de rareza
+
         itemElement.innerHTML = `
-            <img src="${item.img}" alt="${item.nombre}">
-            <div class="item-tooltip">
-                <strong>${item.nombre}</strong><br>
-                ${item.tipo === 'pocion' ? `Curación: +${item.curacion}<br>` : ''}                
-                ${item.descripcion}<br>
-                ${Object.entries(item)
-                    .filter(([key, val]) => ['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val)
-                    .map(([key, val]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: +${val}`)
-                    .join('<br>')}
-            </div>
-        `;
-        
+    <img src="${item.img}" alt="${item.nombre}">
+    <div class="item-tooltip">
+      <strong style="color: ${item.colorRareza}">${item.nombre}</strong><br>
+      ${item.descripcion}<br>
+      ${item.tipo === 'arma' ? `Daño: ${item.danoMin}-${item.danoMax}<br>` : ''}
+      ${item.defensa ? `Defensa: +${item.defensa}<br>` : ''}
+      ${Object.entries(item)
+                .filter(([key]) => ['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key))
+                .map(([key, val]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: +${val}`)
+                .join('<br>')}
+    </div>
+  `;
+
         itemElement.onclick = () => equiparItem(item.id);
         itemsContainer.appendChild(itemElement);
     });
@@ -593,7 +751,7 @@ function equiparItem(itemId) {
     }
 
     let slot;
-    switch(item.tipo) {
+    switch (item.tipo) {
         case 'anillo':
             slot = jugador.equipo.anillo1 ? 'anillo2' : 'anillo1';
             break;
@@ -603,22 +761,22 @@ function equiparItem(itemId) {
         case 'pechera':
         case 'guantes':
         case 'botas':
-        case 'pendiente':
+        case 'amuleto':
             slot = item.tipo;
             break;
         default: return;
     }
-    
+
     // Desequipar primero si ya hay algo en ese slot
     if (jugador.equipo[slot]) {
         desequiparItem(slot);
     }
-    
+
     // Equipar el nuevo item
     const itemIndex = jugador.inventario.findIndex(i => i.id === itemId);
     jugador.equipo[slot] = jugador.inventario[itemIndex];
     jugador.inventario.splice(itemIndex, 1);
-    
+
     // Aplicar bonificaciones
     aplicarBonificacionesItem(jugador.equipo[slot], 'add');
     actualizarUI();
@@ -636,15 +794,15 @@ function aplicarBonificacionesItem(item, action) {
 
     // Actualizar armadura cuando el item no es un arma
     if (item.tipo !== 'arma' && item.defensa) {
-        jugador.armadura += item.defensa * multiplier;
+        statsCombate.armadura += item.defensa * multiplier;
     }
-}    
+}
 
 function desequiparItem(slot) {
     const item = jugador.equipo[slot];
     if (!item) return;
 
-    console.log(`[DEBUG] Desequipando: ${item.nombre} de slot ${slot}`); 
+    console.log(`[DEBUG] Desequipando: ${item.nombre} de slot ${slot}`);
 
     aplicarBonificacionesItem(item, 'remove');
     jugador.inventario.push(item);
@@ -656,28 +814,35 @@ function desequiparItem(slot) {
 function actualizarInventarioUI() {
     filtrarInventario('todos');
     const inventarioContainer = document.getElementById('items-container');
-    
+
     if (!inventarioContainer || !window.jugador?.inventario) return;
-  
+
     if (window.jugador.inventario.length === 0) {
-      inventarioContainer.innerHTML = '<p>No tienes items aún.</p>';
-      return;
+        inventarioContainer.innerHTML = '<p>No tienes items aún.</p>';
+        return;
     }
-  
+
     // Modifica esta parte para que cada item tenga el onclick correcto:
     inventarioContainer.innerHTML = window.jugador.inventario.map(item => `
-        <div class="item-inventario" onclick="equiparItem(${item.id})">
-            <img src="${item.img}" alt="${item.nombre}">
-            <p>${item.nombre}</p>
-        </div>
-    `).join('');
+    <div class="item-inventario" onclick="equiparItem(${item.id})">
+        <img src="${item.img}" alt="${item.nombre}">
+        <p>${item.nombre}</p>
+    </div>
+`).join('');
 }
 
 function actualizarVestuarioUI() {
     Object.keys(jugador.equipo).forEach(slot => {
         const slotElement = document.getElementById(`${slot}-img`);
-        slotElement.innerHTML = "";
         
+        // Verificar si el elemento existe
+        if (!slotElement) {
+            console.warn(`Elemento no encontrado: ${slot}-img`);
+            return;
+        }
+
+        slotElement.innerHTML = "";
+
         if (jugador.equipo[slot]) {
             const img = document.createElement("img");
             img.src = jugador.equipo[slot].img;
@@ -691,7 +856,7 @@ function actualizarVestuarioUI() {
             slotElement.onclick = null;
         }
     });
-    
+
     // Actualizar resumen de equipo
     const resumenElement = document.getElementById("resumen-equipo");
     const bonos = {
@@ -700,7 +865,7 @@ function actualizarVestuarioUI() {
         defensa: 0,
         stats: {}
     };
-    
+
     Object.values(jugador.equipo).forEach(item => {
         if (item) {
             if (item.tipo === 'arma') {
@@ -709,7 +874,7 @@ function actualizarVestuarioUI() {
             } else {
                 bonos.defensa += item.defensa;
             }
-            
+
             Object.entries(item).forEach(([key, val]) => {
                 if (['fuerza', 'habilidad', 'agilidad', 'constitucion', 'carisma', 'inteligencia'].includes(key) && val) {
                     bonos.stats[key] = (bonos.stats[key] || 0) + val;
@@ -717,123 +882,32 @@ function actualizarVestuarioUI() {
             });
         }
     });
-    
+
     // Calcular daño total
     const danoBaseMin = 2;
     const danoBaseMax = 2;
     const danoTotalMin = danoBaseMin + bonos.dañoMin + jugador.statsBase.fuerza;
     const danoTotalMax = danoBaseMax + bonos.dañoMax + jugador.statsBase.fuerza;
-    
+
     let resumenHTML = `<h3>Bonos del Equipo</h3>
-                      <p>Daño: ${danoTotalMin}-${danoTotalMax} (Base: ${danoBaseMin}-${danoBaseMax}`;
-    
+                  <p>Daño: ${danoTotalMin}-${danoTotalMax} (Base: ${danoBaseMin}-${danoBaseMax}`;
+
     if (bonos.dañoMin > 0 || bonos.dañoMax > 0) {
         resumenHTML += ` + Arma: ${bonos.dañoMin}-${bonos.dañoMax}`;
     }
-    
+
     resumenHTML += ` + Fuerza: ${jugador.statsBase.fuerza})</p>
-                   <p>Defensa: +${bonos.defensa}</p>`;
-    
+               <p>Defensa: +${bonos.defensa}</p>`;
+
     if (Object.keys(bonos.stats).length > 0) {
         resumenHTML += `<h4>Atributos:</h4>`;
         Object.entries(bonos.stats).forEach(([stat, valor]) => {
             resumenHTML += `<p>${stat.charAt(0).toUpperCase() + stat.slice(1)}: +${valor}</p>`;
         });
     }
-    
+
     resumenElement.innerHTML = resumenHTML;
 }
-
-function cargarCombates() {
-    if (localStorage.getItem('combatesDisponibles')) {
-        jugador.combatesDisponibles = parseInt(localStorage.getItem('combatesDisponibles'));
-    }
-
-    if (localStorage.getItem('ultimoCombate')) {
-        const ahora = new Date().getTime();
-        const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate'));
-        const tiempoTranscurrido = ahora - ultimoCombate;
-        
-        // Asumiendo que tienes esta propiedad en el objeto jugador
-        const tiempoRecarga = jugador.tiempoRecarga || 300000; // 5 minutos por defecto
-        
-        const combatesRecuperados = Math.floor(tiempoTranscurrido / tiempoRecarga);
-        
-        if (combatesRecuperados > 0) {
-            jugador.combatesDisponibles = Math.min(jugador.combatesMaximos, jugador.combatesDisponibles + combatesRecuperados);
-            localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
-            
-            const tiempoRestante = tiempoTranscurrido % tiempoRecarga;
-            localStorage.setItem('ultimoCombate', (ahora - tiempoRestante).toString());
-        }
-    }
-}
-
-function actualizarCombatesUI() {
-    // Actualizar contador de combates
-    document.getElementById("combate-count").textContent = jugador.combatesDisponibles;
-    
-    const ahora = new Date().getTime();
-    const ultimoCombate = parseInt(localStorage.getItem('ultimoCombate')) || ahora;
-    const tiempoDesdeUltimoCombate = ahora - ultimoCombate;
-    
-    // Calcular cuántos combates se han recuperado desde el último uso
-    const combatesRecuperados = Math.floor(tiempoDesdeUltimoCombate / jugador.tiempoRecarga);
-    
-    if (combatesRecuperados > 0) {
-        // Si hay combates por recuperar
-        jugador.combatesDisponibles = Math.min(
-            jugador.combatesMaximos, 
-            jugador.combatesDisponibles + combatesRecuperados
-        );
-        
-        // Actualizar el último combate con el tiempo sobrante
-        const nuevoUltimoCombate = ultimoCombate + (combatesRecuperados * jugador.tiempoRecarga);
-        localStorage.setItem('ultimoCombate', nuevoUltimoCombate.toString());
-        localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
-    }
-    
-    // Calcular tiempo para el próximo combate (si no están todos)
-    if (jugador.combatesDisponibles < jugador.combatesMaximos) {
-        const tiempoProximoCombate = jugador.tiempoRecarga - (tiempoDesdeUltimoCombate % jugador.tiempoRecarga);
-        
-        const minutos = Math.floor(tiempoProximoCombate / (1000 * 60));
-        const segundos = Math.floor((tiempoProximoCombate % (1000 * 60)) / 1000);
-        
-        document.getElementById("combate-timer").textContent = 
-            `Recarga en ${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
-        
-        // Actualizar cada segundo
-        setTimeout(actualizarCombatesUI, 1000);
-    } else {
-        // Todos los combates recuperados
-        document.getElementById("combate-timer").textContent = 'Completo';
-    }
-    
-    // Actualizar estado de los enemigos en la UI si es necesario
-    if (enCombate) {
-        actualizarEnemigosUI();
-    }
-}
-
-function usarCombate() {
-    if (jugador.combatesDisponibles > 0) {
-        jugador.combatesDisponibles--;
-        localStorage.setItem('combatesDisponibles', jugador.combatesDisponibles.toString());
-        localStorage.setItem('ultimoCombate', new Date().getTime().toString());
-        
-        actualizarCombatesUI(); // Esto iniciará el temporizador automáticamente
-        
-        // Elimina este setTimeout ya que actualizarCombatesUI() ahora se maneja sola
-        // if (jugador.combatesDisponibles < jugador.combatesMaximos) {
-        //    setTimeout(actualizarCombatesUI, jugador.tiempoRecarga);
-        // }
-        
-        return true;
-    }
-    return false;
-}
-
 
 // --- FUNCIONES DE INTERFAZ ---
 function mostrarSeccion(seccionId) {
@@ -841,10 +915,10 @@ function mostrarSeccion(seccionId) {
     document.querySelectorAll('.seccion').forEach(seccion => {
         seccion.classList.remove('activa');
     });
-    
+
     // Mostrar la sección seleccionada
     document.getElementById(seccionId).classList.add('activa');
-    
+
     // Inicializaciones específicas de cada sección
     if (seccionId === 'tienda') {
         actualizarTiendaUI();
@@ -857,23 +931,26 @@ function mostrarSeccion(seccionId) {
         document.querySelectorAll('.filtros-misiones button').forEach(btn => {
             btn.classList.remove('activo');
         });
-        
+
         // Activar el botón "Todas"
         const btnTodas = document.querySelector('.filtros-misiones button[onclick*="filtrarMisiones(\'todas\')"]');
         if (btnTodas) {
             btnTodas.classList.add('activo');
         }
-        
+
         // Mostrar todas las misiones
         actualizarMisionesUI('todas');
     }
-    
+
     // Reiniciar combate si se abre la sección de combate
+    // Específico para combate
     if (seccionId === 'combate') {
         enCombate = false;
         enemigosActuales = [];
+        actualizarUbicacionesUI(); // Añadir esta línea
         actualizarEnemigosUI();
         document.getElementById("log-combate").textContent = "Selecciona una ubicación para comenzar el combate";
+        actualizarCombatesUI(); // Asegurar que se actualice el contador
     }
 
     if (seccionId === 'fabrica') {
@@ -884,9 +961,9 @@ function mostrarSeccion(seccionId) {
 }
 
 function actualizarUI() {
-    const porcentajeVida = Math.floor((jugador.vida / jugador.vidaMax) * 100);
+    const porcentajeVida = Math.floor((statsCombate.vida / statsCombate.vidaMax) * 100);
     const porcentajeExp = Math.floor((jugador.exp / jugador.expParaSubir) * 100);
-    
+
     // Actualizar todos los valores visibles
     document.getElementById("nombre-personaje").textContent = jugador.nombre;
     document.getElementById("nivel-value").textContent = jugador.nivel;
@@ -896,7 +973,7 @@ function actualizarUI() {
     document.getElementById("exp-porcentaje").textContent = `${porcentajeExp}%`;
     document.querySelector(".progreso.exp").style.width = `${porcentajeExp}%`;
     document.getElementById("oro-value").textContent = jugador.oro;
-    document.getElementById("armadura-value").textContent = jugador.armadura;
+    document.getElementById("armadura-value").textContent = statsCombate.armadura;
     document.getElementById("victorias").textContent = `Victorias: ${jugador.victorias}`;
     document.getElementById("familia").textContent = `Familia: ${jugador.familia}`;
     document.getElementById("rubies-value").textContent = jugador.rubies;
@@ -906,19 +983,19 @@ function actualizarUI() {
     // Calcular daño total
     let danoMinTotal = 2;
     let danoMaxTotal = 2;
-    
+
     Object.values(jugador.equipo).forEach(item => {
         if (item && item.tipo === 'arma') {
             danoMinTotal += item.danoMin;
             danoMaxTotal += item.danoMax;
         }
     });
-    
+
     danoMinTotal += jugador.statsBase.fuerza;
     danoMaxTotal += jugador.statsBase.fuerza;
-    
+
     document.getElementById("dano-value").textContent = `${danoMinTotal}-${danoMaxTotal}`;
-    
+
     // Stats generales (se mantienen igual)
     document.getElementById("fuerza-value").textContent = jugador.statsBase.fuerza;
     document.getElementById("habilidad-value").textContent = jugador.statsBase.habilidad;
@@ -926,9 +1003,9 @@ function actualizarUI() {
     document.getElementById("constitucion-value").textContent = jugador.statsBase.constitucion;
     document.getElementById("carisma-value").textContent = jugador.statsBase.carisma;
     document.getElementById("inteligencia-value").textContent = jugador.statsBase.inteligencia;
-    
+
     // --- NUEVA SECCIÓN DE ENTRENAMIENTO MODIFICADA ---
-  
+
     // Calcular bonos de items
     const bonosItems = {
         fuerza: 0,
@@ -960,447 +1037,20 @@ function actualizarUI() {
         // document.getElementById(`${stat}-max`).textContent = jugador.statsMaximos[stat]; // Máximo
     });
     // --- FIN DE SECCIÓN MODIFICADA ---
-    
+
     // Resto de funciones (se mantienen igual)
     actualizarInventarioUI();
     actualizarVestuarioUI();
     actualizarUbicacionesUI();
-    
+
     // localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
 
-    if (jugador.vida >= jugador.vidaMax && jugador.intervaloCuracion) {
+    if (statsCombate.vida >= statsCombate.vidaMax && jugador.intervaloCuracion) {
         clearInterval(jugador.intervaloCuracion);
         document.getElementById("curacion-timer").textContent = "Completo";
     }
 }
 
-function actualizarUbicacionesUI() {
-    const gridUbicaciones = document.querySelector(".grid-ubicaciones");
-    gridUbicaciones.innerHTML = "";
-    
-    Object.entries(ubicaciones).forEach(([nombre, datos]) => {
-        const btn = document.createElement("button");
-        btn.className = "ubicacion-btn";
-        btn.textContent = `${nombre} (Nv. ${datos.niveles[0]}-${datos.niveles[1]})`;
-        
-        // Deshabilitar si el jugador no tiene el nivel suficiente
-        if (jugador.nivel < datos.niveles[0]) {
-            btn.disabled = true;
-            btn.title = `Requiere nivel ${datos.niveles[0]}`;
-        } else if (jugador.nivel > datos.niveles[1]) {
-            btn.classList.add("ubicacion-facil");
-            btn.title = "Esta zona es muy fácil para tu nivel";
-        }
-        
-        btn.addEventListener("click", () => seleccionarUbicacion(nombre));
-        gridUbicaciones.appendChild(btn);
-    });
-}
-
-// --- SISTEMA DE COMBATE ---
-function seleccionarUbicacion(nombreUbicacion) {
-        // Verificar que la ubicación existe
-        if (!ubicaciones[nombreUbicacion]) {
-            console.error("Ubicación no encontrada:", nombreUbicacion);
-            return;
-        }
-    const ubicacion = ubicaciones[nombreUbicacion];
-    
-    // Verificar nivel del jugador
-    if (jugador.nivel < ubicacion.niveles[0]) {
-        document.getElementById("log-combate").textContent = 
-            `¡Necesitas ser nivel ${ubicacion.niveles[0]} para explorar ${nombreUbicacion}!`;
-        return;
-    }
-    
-    if (jugador.nivel > ubicacion.niveles[1]) {
-        document.getElementById("log-combate").textContent = 
-            `¡${nombreUbicacion} es demasiado fácil para tu nivel (${jugador.nivel})!`;
-        return;
-    }
-
-    if (jugador.combatesDisponibles <= 0) {
-        document.getElementById("log-combate").textContent = 
-            "No tienes combates disponibles para explorar " + nombreUbicacion;
-        return;
-    }
-
-// Filtrar enemigos basados en la ubicación seleccionada
-const enemigosUbicacion = enemigosBase.filter(enemigo => 
-    ubicacion.enemigos.includes(enemigo.id));
-
-// Escalar enemigos según el nivel del jugador
-const enemigosEscalados = enemigosUbicacion.map(enemigo => {
-    const nivelBase = ubicacion.niveles[0];
-    const factorEscala = 1 + (jugador.nivel - nivelBase) * 0.1;
-        
-    return {
-        ...enemigo,
-        vida: Math.floor(enemigo.vida * factorEscala),
-        vidaMax: Math.floor(enemigo.vidaMax * factorEscala),
-        ataque: Math.floor(enemigo.ataque * factorEscala),
-        defensa: Math.floor(enemigo.defensa * factorEscala),
-        fuerza: Math.floor(enemigo.fuerza * factorEscala),
-        habilidad: Math.floor(enemigo.habilidad * factorEscala),
-        agilidad: Math.floor(enemigo.agilidad * factorEscala),
-        constitucion: Math.floor(enemigo.constitucion * factorEscala),
-        carisma: Math.floor(enemigo.carisma * factorEscala),
-        inteligencia: Math.floor(enemigo.inteligencia * factorEscala),
-        oro: Math.floor(enemigo.oro * factorEscala),
-        exp: Math.floor(enemigo.exp * factorEscala),
-        derrotado: false
-    };
-});
-
-        // Iniciar combate con estos enemigos (sin descontar combate todavía)
-        enemigosActuales = [...enemigosEscalados];
-        enCombate = true;
-        ubicacionActual = nombreUbicacion;
-        actualizarEnemigosUI();
-        document.getElementById("log-combate").textContent = 
-            `Explorando ${nombreUbicacion} (Nivel ${ubicacion.niveles[0]}-${ubicacion.niveles[1]})... ¡Selecciona un enemigo para atacar!`;
-        actualizarCombatesUI();
-        actualizarProgresoMisiones('visitarUbicacion', 1);
-}
-
-function actualizarEnemigosUI() {
-    const grid = document.getElementById("enemigos-grid");
-    grid.innerHTML = "";
-    
-    enemigosActuales.forEach((enemigo, index) => {
-        const sinCombates = jugador.combatesDisponibles <= 0;
-        const clases = [
-            'enemigo-card',
-            enemigo.derrotado ? 'derrotado' : '',
-            sinCombates ? 'sin-combates' : ''
-        ].filter(Boolean).join(' ');
-        
-        const card = document.createElement("div");
-        card.className = clases;
-        card.innerHTML = `
-            <img src="${enemigo.imagen}" alt="${enemigo.nombre}">
-            <h3>${enemigo.nombre} (Nv. ${enemigo.nivel[0]}-${enemigo.nivel[1]})</h3>
-            <div class="barra-vida">
-                <div class="vida-actual" style="width: ${(enemigo.vida / enemigo.vidaMax) * 100}%"></div>
-            </div>
-            <p>Vida: ${enemigo.vida}/${enemigo.vidaMax}</p>
-            <p>Ataque: ${enemigo.ataque}</p>
-            <p>Defensa: ${enemigo.defensa}</p>
-        `;
-        
-        // Solo permite clic si hay combates disponibles y el enemigo no está derrotado
-        if (!enemigo.derrotado && jugador.combatesDisponibles > 0) {
-            card.addEventListener("click", () => atacar(index));
-        }
-        grid.appendChild(card);
-    });
-}
-
-function atacar(indexEnemigo) {
-    const ahora = Date.now();
-    
-    // Verificar si puede atacar basado en el temporizador
-    if (!puedeAtacar) {
-        const tiempoRestante = Math.ceil((tiempoEsperaCombate - (ahora - tiempoUltimoAtaque))) / 1000;
-        document.getElementById("log-combate").textContent = `Debes esperar ${tiempoRestante} segundos antes de atacar de nuevo.`;
-        return;
-    }
-
-    if (!ubicacionActual) {
-        console.error("No hay ubicación actual definida");
-        return;
-    }
-    
-    if (jugador.combatesDisponibles <= 0) {
-        document.getElementById("log-combate").textContent = "¡No tienes combates disponibles! Espera a que se recarguen.";
-        return;
-    }
-
-    // Descontar combate al inicio para evitar problemas
-    if (!usarCombate()) {
-        return;
-    }
-
-    // Reiniciar el temporizador visualmente
-    tiempoUltimoAtaque = ahora;
-    puedeAtacar = false;
-    
-    // Restaurar elementos del temporizador
-    const contenedor = document.getElementById("temporizador-espera");
-    contenedor.innerHTML = `
-        <p class="tiempo-restante">Tiempo de espera: <span id="contador-espera">15</span>s</p>
-        <progress id="barra-espera" value="15" max="15"></progress>
-        <p id="atacar-ya" class="mensaje-ataque">¡ATACAR YA, GLADIADOR! ⚔️</p>
-    `;
-    
-    // Iniciar el temporizador nuevamente
-    mostrarTemporizadorEspera();
-
-    const enemigo = enemigosActuales[indexEnemigo];
-    let log = `⚔️ **Combate contra ${enemigo.nombre}** ⚔️\n\n`;
-    let jugadorVivo = true;
-    let enemigoVivo = true;
-    let recibioDaño = false;
-
-    // Batalla automática hasta que alguien muera
-    while (jugadorVivo && enemigoVivo) {
-        // Turno del jugador
-        const precision = 75 + (jugador.statsBase.habilidad * 5);
-        if (Math.random() * 100 <= precision) {
-            const dañoJugador = Math.max(1, jugador.statsBase.fuerza + jugador.danoMin - enemigo.defensa);
-            enemigo.vida -= dañoJugador;
-            log += `🗡️ Golpeas al ${enemigo.nombre} (-${dañoJugador} vida).\n`;
-            
-            if (enemigo.vida <= 0) {
-                enemigo.vida = 0;
-                enemigo.derrotado = true;
-                enemigoVivo = false;
-                
-                log += `💀 **¡Has derrotado al ${enemigo.nombre}!**\n`;
-                log += `💰 Oro: ${enemigo.oro} | ✨ Exp: ${enemigo.exp}\n`;
-                
-                victoria(recibioDaño);
-                break;
-            }
-        } else {
-            log += `❌ Fallaste tu ataque contra el ${enemigo.nombre}.\n`;
-        }
-
-        // Turno del enemigo (si sigue vivo)
-        if (enemigoVivo) {
-            const evasion = 10 + (jugador.statsBase.agilidad * 3);
-            if (Math.random() * 100 > evasion) {
-                const dañoEnemigo = Math.max(1, enemigo.ataque - jugador.armadura);
-                jugador.vida -= dañoEnemigo;
-                recibioDaño = true;
-                log += `🛡️ ${enemigo.nombre} te contraataca (-${dañoEnemigo} vida).\n`;
-                
-                if (jugador.vida <= 0) {
-                    jugador.vida = 0;
-                    jugadorVivo = false;
-                    log += `☠️ **¡Has sido derrotado por ${enemigo.nombre}!**\n`;
-                    break;
-                }
-            } else {
-                log += `🎯 ¡Esquivaste el ataque del ${enemigo.nombre}!\n`;
-            }
-        }
-    }
-
-    // Actualizar UI
-    document.getElementById("log-combate").textContent = log;
-    actualizarEnemigosUI();
-    actualizarUI();
-
-    // Verificar victoria/derrota global
-    if (enemigosActuales.every(e => e.derrotado)) {
-        victoria(recibioDaño);
-    } else if (!jugadorVivo) {
-        derrota();
-    }
-    
-    verificarCuracionAutomatica();
-    actualizarUI();
-}
-
-function mostrarTemporizadorEspera() {
-    const contadorElement = document.getElementById("contador-espera");
-    const barraElement = document.getElementById("barra-espera");
-    const contenedor = document.getElementById("temporizador-espera");
-    
-    if (!contadorElement || !barraElement) return;
-    
-    const ahora = Date.now();
-    const tiempoRestante = tiempoEsperaCombate - (ahora - tiempoUltimoAtaque);
-    const segundos = Math.ceil(tiempoRestante / 1000);
-    
-    if (tiempoRestante > 0) {
-        // Temporizador en progreso (15s)
-        contenedor.classList.remove("temporizador-finalizado");
-        contadorElement.textContent = segundos;
-        barraElement.value = segundos;
-        setTimeout(mostrarTemporizadorEspera, 1000);
-        puedeAtacar = false;
-    } else {
-        // Mostrar mensaje "Ya puedes atacar" por 5 segundos
-        contenedor.innerHTML = `<p>¡Ya puedes atacar! ⚔️</p>`;
-        puedeAtacar = true;
-        
-        // Si pasan 5 segundos sin atacar, ocultar mensaje pero mantener puedeAtacar=true
-        setTimeout(() => {
-            if (puedeAtacar) { // Si no ha atacado aún
-                contenedor.innerHTML = ''; // Limpiar mensaje
-                // No reiniciamos el temporizador hasta que el jugador ataque
-            }
-        }, 5000);
-        
-        // Opcional: Efecto de sonido
-        if (typeof audioAtacarYa !== 'undefined') {
-            audioAtacarYa.play().catch(e => console.log("Audio no disponible:", e));
-        }
-    }
-}
-
-function huir() {
-    if (!enCombate) return;
-    
-    const chanceHuida = 30 + jugador.statsBase.agilidad;
-    if (Math.random() * 100 < chanceHuida) {
-        document.getElementById("log-combate").textContent = "🏃 Lograste huir del combate.";
-        enCombate = false;
-        enemigosActuales = [];
-        actualizarEnemigosUI();
-    } else {
-        let dañoTotal = 0;
-        enemigosActuales.forEach(enemigo => {
-            if (!enemigo.derrotado) {
-                const dañoEnemigo = Math.max(1, enemigo.ataque - jugador.armadura);
-                jugador.vida -= dañoEnemigo;
-                dañoTotal += dañoEnemigo;
-            }
-        });
-        
-        document.getElementById("log-combate").textContent = 
-            `❌ No puedes huir... ¡Los enemigos te atacan! (-${dañoTotal} vida)`;
-        
-        if (jugador.vida <= 0) derrota();
-        actualizarUI();
-    }
-}
-
-function victoria(recibioDaño) {
-     let recompensaOro = 0;
-     let recompensaExp = 0;
-     let itemsObtenidos = [];
-    
-     // Calcular recompensas de enemigos derrotados
-     console.log("Enemigos derrotados:");
-     enemigosActuales.forEach(enemigo => {
-         if (enemigo.derrotado) {
-             console.log(`- ${enemigo.nombre}: Oro=${enemigo.oro}, Exp=${enemigo.exp}`);
-             recompensaOro += enemigo.oro;
-             recompensaExp += enemigo.exp;
-         }
-     });
-    
-     const nivelZona = ubicaciones[ubicacionActual].niveles[0]; // Ahora seguro que existe
-     // Aplicar bonus de carisma al oro
-     const bonusCarisma = 1 + (jugador.statsBase.carisma * 0.1);
-     const oroFinal = Math.floor(recompensaOro * bonusCarisma);
-     const oroConBonus = aplicarBonusEvento('oro', oroFinal);
-     jugador.oro += oroConBonus;
-    
-     const expConBonus = aplicarBonusEvento('exp', recompensaExp);
-     jugador.exp += expConBonus;
-    
-    
-     // Depuración (opcional)
-     console.log(`Oro base: ${recompensaOro} + Bonus carisma (x${bonusCarisma.toFixed(1)}) = ${oroFinal}`);
-
-     // Aplicar recompensas al jugador
-     jugador.oro += oroFinal;
-     jugador.exp += recompensaExp;
-     jugador.victorias++;
-
-     // Generar ítem (20% de probabilidad - solo una vez)
-     if (Math.random() <= 0.2) {
-         const nivelZona = ubicaciones[ubicacionActual].niveles[0];
-         const nuevoItem = generarItemAleatorio(nivelZona);
-         jugador.inventario.push(nuevoItem);
-         itemsObtenidos.push(nuevoItem);
-         console.log("Item obtenido:", nuevoItem);
-     }
-
-     // Construir mensaje detallado
-     let mensaje = document.getElementById("log-combate").textContent;
-     mensaje += `\n\n⚔️ **¡VICTORIA EN ${ubicacionActual.toUpperCase()}!** ⚔️\n`;
-     mensaje += `\n▸ 💰 Oro: ${oroFinal} (Bonus carisma: x${bonusCarisma.toFixed(1)})`;
-     mensaje += `\n▸ ✨ Experiencia: ${recompensaExp}`;
-    
-     if (itemsObtenidos.length > 0) {
-         mensaje += `\n\n🎁 **¡ITEM OBTENIDO!**`;
-         itemsObtenidos.forEach(item => {
-             mensaje += `\n▸ ${item.nombre} (${item.descripcion})`;
-         });
-     } else {
-         mensaje += `\n\n🔍 No encontraste items esta vez.`;
-     }
-
-     // Actualizar UI y finalizar combate
-     document.getElementById("log-combate").textContent = mensaje;
-     enCombate = false;
-     ubicacionActual = "";
-    
-     // Verificar subida de nivel
-     if (jugador.exp >= jugador.expParaSubir) {
-         subirNivel();
-     }
-    
-     actualizarUI();
-    
-     // Depuración final
-     console.log("Estado del jugador:", {
-         oro: jugador.oro,
-         exp: jugador.exp,
-         rubies: jugador.rubies,
-         victorias: jugador.victorias
-     });
-
-     actualizarProgresoMisiones('enemigo', 1); // Contar enemigos derrotados
-     if (!recibioDaño) {
-         actualizarProgresoMisiones('enemigoSinDaño', 1); // Para misiones de "sin recibir daño"
-     }
-
-     if (itemsObtenidos.length > 0) {
-         actualizarProgresoMisiones('conseguirItem', itemsObtenidos.length);
-         actualizarProgresoMisiones('conseguirOro');
-     }
- }
-
-function derrota() {
-    jugador.vida = Math.floor(jugador.vidaMax == 0);
-    document.getElementById("log-combate").textContent += "\n\n☠️ Has sido derrotado. Has sido derrotado... ¡Regresa a la ciudad para curarte!";
-    enCombate = false;
-    ubicacionActual = "";
-    actualizarUI();
-}
-
-function iniciarCuracion() {
-    // Detener cualquier temporizador existente
-    if (jugador.intervaloCuracion) {
-        clearInterval(jugador.intervaloCuracion);
-        jugador.intervaloCuracion = null;
-    }
-
-    // Solo iniciar si la vida no está al máximo
-    if (jugador.vida < jugador.vidaMax) {
-        const ahora = new Date().getTime();
-        jugador.ultimaCuracion = ahora;
-        
-        let tiempoRestante = jugador.tiempoCuracion;
-        actualizarTemporizadorUI(tiempoRestante);
-        
-        jugador.intervaloCuracion = setInterval(() => {
-            tiempoRestante -= 1000;
-            
-            if (tiempoRestante <= 0) {
-                aplicarCuracion();
-                tiempoRestante = jugador.tiempoCuracion;
-                jugador.ultimaCuracion = new Date().getTime();
-            }
-            
-            actualizarTemporizadorUI(tiempoRestante);
-            
-            // Detener si la vida llega al máximo
-            if (jugador.vida >= jugador.vidaMax) {
-                clearInterval(jugador.intervaloCuracion);
-                document.getElementById("curacion-timer").textContent = "Completo";
-            }
-        }, 1000);
-    } else {
-        document.getElementById("curacion-timer").textContent = "Completo";
-    }
-}
 
 function canjearVictorias() {
     if (jugador.victorias >= 10) {
@@ -1416,65 +1066,26 @@ function canjearVictorias() {
     }
 }
 
-// Añadir esta función para verificar y activar la curación automáticamente
-function verificarCuracionAutomatica() {
-    if (jugador.vida < jugador.vidaMax && !jugador.intervaloCuracion) {
-        iniciarCuracion();
-        actualizarProgresoMisiones('canjearVictorias', 1);
-    }
-}
-
-function actualizarTemporizadorUI(ms) {
-    const minutos = Math.floor(ms / 60000);
-    const segundos = Math.floor((ms % 60000) / 1000);
-    document.getElementById("curacion-timer").textContent = 
-        `${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
-}
-
-function aplicarCuracion() {
-    const vidaAnterior = jugador.vida;
-    jugador.vida = Math.min(jugador.vidaMax, jugador.vida + jugador.vidaPorCuracion);
-    const vidaRecuperada = jugador.vida - vidaAnterior;
-    
-    if (vidaRecuperada > 0) {
-        document.getElementById("log-combate").textContent = 
-            `💚 Recuperaste ${vidaRecuperada} vida (curación automática cada 2 minutos).`;
-        actualizarUI();
-    }
-}
-
-function forzarCuracion() {
-    // Verificar si ya está al máximo
-    if (jugador.vida >= jugador.vidaMax) {
-        document.getElementById("log-combate").textContent = "💚 Ya estás al máximo de vida.";
-        return;
-    }
-    
-    // Reiniciar el temporizador
-    iniciarCuracion();
-    document.getElementById("log-combate").textContent = 
-        "⏳ Temporizador de curación reiniciado. La próxima curación será en 2 minutos.";
-}
 
 // --- SISTEMA DE ENTRENAMIENTO ---
 function subirNivel() {
     jugador.nivel++;
     jugador.exp = 0;
     jugador.expParaSubir = Math.floor(jugador.expParaSubir * 1.5);
-    jugador.vidaMax += 20 + (jugador.statsBase.constitucion * 2);
-    jugador.vida = jugador.vidaMax;
-    
+    statsCombate.vidaMax += 20 + (jugador.statsBase.constitucion * 2);
+    statsCombate.vida = statsCombate.vidaMax;
+
     if (jugador.nivel % 2 === 0) {
         Object.keys(jugador.statsMaximos).forEach(stat => {
             jugador.statsMaximos[stat]++;
         });
     }
-    
+
     alert(`¡Subiste al nivel ${jugador.nivel}! +${20 + (jugador.statsBase.constitucion * 2)} de vida máxima.`);
-    
+
     // Actualizar misiones de nivel
     actualizarProgresoMisiones('nivel');
-    
+
     actualizarUI();
 }
 
@@ -1482,33 +1093,33 @@ function mejorarStat(stat) {
     const mejorasActuales = jugador.mejorasStats[stat];
     const costoBase = jugador.costosEntrenamiento[stat];
     const costo = costoBase + (mejorasActuales * costoBase); // Ej: 25, 50, 75... o 50, 100, 150...
-    
+
     if (jugador.oro < costo) {
         alert(`Necesitas ${costo} oro (tienes ${jugador.oro})`);
         return;
     }
-    
+
     if (jugador.statsBase[stat] >= jugador.statsMaximos[stat]) {
         alert(`¡Máximo alcanzado (${jugador.statsMaximos[stat]})!`);
         return;
     }
-    
+
     // Aplicar la mejora
     jugador.statsBase[stat]++;
     jugador.mejorasStats[stat]++;
     jugador.oro -= costo;
-    
+
     // Bonus de constitución
     if (stat === 'constitucion') {
         const vidaExtra = 5;
-        jugador.vidaMax += vidaExtra;
-        jugador.vida += vidaExtra;
+        statsCombate.vidaMax += vidaExtra;
+        statsCombate.vida += vidaExtra;
     }
-    
+
     // Actualizar el botón con el NUEVO costo (importante: mejorasActuales + 1)
     const proximoCosto = costoBase + ((mejorasActuales + 1) * costoBase);
     actualizarBotonStat(stat, proximoCosto); // <-- Esta línea es clave
-    
+
     actualizarUI();
     verificarCuracionAutomatica();
     actualizarProgresoMisiones('mejorarStat', 1, stat);
@@ -1517,31 +1128,10 @@ function mejorarStat(stat) {
 function actualizarBotonStat(stat, costo) {
     // Buscar directamente por el atributo data-stat (más eficiente y seguro)
     const boton = document.querySelector(`button[data-stat="${stat}"]`);
-    
+
     if (boton) {
         boton.innerHTML = `+${costo} oro <small>(1 Punto)</small>`;
-        boton.onclick = function() { mejorarStat(stat); };
-    }
-}
-
-function comprarCombate() {
-    if (jugador.rubies >= 1) {
-        const confirmar = confirm("¿Deseas gastar 1 rubí para comprar un combate adicional?");
-        if (confirmar) {
-            jugador.rubies -= 1;
-            jugador.combatesDisponibles += 1;
-            
-            // Asegurarse de no exceder el máximo
-            if (jugador.combatesDisponibles > jugador.combatesMaximos) {
-                jugador.combatesDisponibles = jugador.combatesMaximos;
-            }
-            
-            actualizarUI();
-            actualizarCombatesUI();
-            alert("¡Compra exitosa! Has obtenido 1 combate adicional.");
-        }
-    } else {
-        alert("No tienes suficientes rubies. Necesitas al menos 1 rubí para comprar un combate.");
+        boton.onclick = function () { mejorarStat(stat); };
     }
 }
 
@@ -1591,13 +1181,13 @@ function cargarJuego() {
             img: "ropa/escudo.png",
             descripcion: "Defensa: +3",
             precio: 45
-        };       
-    
+        };
+
         jugador.inventario.push(espadaInicial, escudoInicial);
         equiparItem(1); // Equipar espada
         equiparItem(2); // Equipar escudo       
     }
-    
+
     cargarCombates();
     actualizarUI();
     actualizarCombatesUI();
@@ -1611,13 +1201,13 @@ function cargarJuego() {
     });
 
     // Inicializar la tienda
-    inicializarTienda();    
+    inicializarTienda();
     reiniciarMisiones(); // <-- Reemplazar reiniciarMisionesDiarias() por esto
     actualizarMisionesUI('todas');
     iniciarEventosProgramados();
     if (jugador.fabrica.colaProduccion.length > 0) {
         actualizarProduccion();
-    actualizarProgresoMisiones('nivel');
+        actualizarProgresoMisiones('nivel');
     }
     actualizarInventarioUI(); // Añade esta línea
 }
@@ -1627,7 +1217,7 @@ function actualizarMisionesUI(filtro = 'todas') {
     lista.innerHTML = "";
 
     let misionesMostrar = [];
-    
+
     // Filtrar misiones basadas en el tipo y si han sido reclamadas
     if (filtro === 'diarias') {
         misionesMostrar = [...jugador.misiones.diarias].filter(m => !(m.completada && m.reclamada));
@@ -1645,12 +1235,12 @@ function actualizarMisionesUI(filtro = 'todas') {
 
     if (misionesMostrar.length === 0) {
         lista.innerHTML = `
-            <div class="sin-misiones">
-                <img src="img/misiones-vacias.png" alt="No hay misiones">
-                <p>No hay misiones disponibles</p>
-                ${filtro === 'diarias' ? '<small>Las misiones diarias se reinician cada 24 horas</small>' : ''}
-            </div>
-        `;
+        <div class="sin-misiones">
+            <img src="img/misiones-vacias.png" alt="No hay misiones">
+            <p>No hay misiones disponibles</p>
+            ${filtro === 'diarias' ? '<small>Las misiones diarias se reinician cada 24 horas</small>' : ''}
+        </div>
+    `;
         return;
     }
 
@@ -1659,32 +1249,32 @@ function actualizarMisionesUI(filtro = 'todas') {
         const card = document.createElement("div");
         card.className = `mision-card ${mision.completada ? 'completada' : ''}`;
         card.id = `mision-${mision.id}`;
-        
+
         // Destacar recompensas importantes
         const recompensaHTML = `
-            <div class="recompensas">
-                ${mision.recompensa.oro ? `<span class="recompensa oro">💰 ${mision.recompensa.oro}</span>` : ''}
-                ${mision.recompensa.exp ? `<span class="recompensa exp">✨ ${mision.recompensa.exp}</span>` : ''}
-                ${mision.recompensa.rubies ? `<span class="recompensa rubi">💎 ${mision.recompensa.rubies}</span>` : ''}
-                ${mision.recompensa.item ? `<span class="recompensa item">🎁 Item especial</span>` : ''}
-            </div>
-        `;
+        <div class="recompensas">
+            ${mision.recompensa.oro ? `<span class="recompensa oro">💰 ${mision.recompensa.oro}</span>` : ''}
+            ${mision.recompensa.exp ? `<span class="recompensa exp">✨ ${mision.recompensa.exp}</span>` : ''}
+            ${mision.recompensa.rubies ? `<span class="recompensa rubi">💎 ${mision.recompensa.rubies}</span>` : ''}
+            ${mision.recompensa.item ? `<span class="recompensa item">🎁 Item especial</span>` : ''}
+        </div>
+    `;
 
         card.innerHTML = `
-            <div class="mision-header">
-                <h3>${mision.titulo}</h3>
-                <span class="mision-tipo ${mision.tipo}">${mision.tipo === 'diaria' ? 'Diaria' : 'Historia'}</span>
-            </div>
-            <p class="mision-desc">${mision.descripcion}</p>
-            <div class="mision-progreso">
-                <div style="width: ${porcentaje}%"></div>
-                <span>${mision.progreso}/${mision.requerido}</span>
-            </div>
-            ${recompensaHTML}
-            ${mision.completada ? 
-                '<button class="btn-reclamar" onclick="reclamarRecompensa(' + mision.id + ')">Reclamar Recompensa</button>' : 
+        <div class="mision-header">
+            <h3>${mision.titulo}</h3>
+            <span class="mision-tipo ${mision.tipo}">${mision.tipo === 'diaria' ? 'Diaria' : 'Historia'}</span>
+        </div>
+        <p class="mision-desc">${mision.descripcion}</p>
+        <div class="mision-progreso">
+            <div style="width: ${porcentaje}%"></div>
+            <span>${mision.progreso}/${mision.requerido}</span>
+        </div>
+        ${recompensaHTML}
+        ${mision.completada ?
+                '<button class="btn-reclamar" onclick="reclamarRecompensa(' + mision.id + ')">Reclamar Recompensa</button>' :
                 ''}
-        `;
+    `;
         lista.appendChild(card);
     });
 }
@@ -1698,50 +1288,65 @@ function filtrarMisiones(filtro) {
 }
 
 function reclamarRecompensa(id) {
-    let mision = jugador.misiones.diarias.find(m => m.id === id) || 
-                 jugador.misiones.historia.find(m => m.id === id) ||
-                 jugador.misiones.fabrica.find(m => m.id === id);
-    
+    let mision = jugador.misiones.diarias.find(m => m.id === id) ||
+        jugador.misiones.historia.find(m => m.id === id) ||
+        jugador.misiones.fabrica.find(m => m.id === id);
+
     if (!mision || !mision.completada) return;
 
-    // Dar recompensas
-    if (mision.recompensa.oro) jugador.oro += mision.recompensa.oro;
-    if (mision.recompensa.exp) {
-        jugador.exp += mision.recompensa.exp;
-        if (jugador.exp >= jugador.expParaSubir) {
-            subirNivel();
-        }
+    // Variables para acumular recompensas
+    let oroGanado = 0;
+    let expGanada = 0;
+    let rubiesGanados = 0;
+    let itemObtenido = null;
+
+    // Calcular recompensas base
+    if (mision.recompensa.oro) {
+        oroGanado = aplicarBonusEvento('oro', mision.recompensa.oro);
     }
-    if (mision.recompensa.rubies) jugador.rubies += mision.recompensa.rubies;
-    if (mision.recompensa.item) {
-        const item = generarItemAleatorio(jugador.nivel);
-        jugador.inventario.push(item);
+    if (mision.recompensa.exp) {
+        expGanada = aplicarBonusEvento('exp', mision.recompensa.exp);
+    }
+    if (mision.recompensa.rubies) {
+        rubiesGanados = aplicarBonusEvento('rubies', mision.recompensa.rubies);
     }
 
-     // Manejar recompensa de receta para misiones de fábrica
-     if (mision.recompensa.receta) {
+    // Verificar espacio en inventario antes de dar items
+    if (mision.recompensa.item && jugador.inventario.length < MAX_INVENTARIO) {
+        itemObtenido = generarItemAleatorio(jugador.nivel);
+    }
+
+    // Manejar recompensa de receta para misiones de fábrica
+    if (mision.recompensa.receta) {
         if (!jugador.fabrica.recetasDesbloqueadas.includes(mision.recompensa.receta)) {
             jugador.fabrica.recetasDesbloqueadas.push(mision.recompensa.receta);
             alert(`¡Has desbloqueado la receta para ${recetasFabrica.find(r => r.id === mision.recompensa.receta).nombre}!`);
         }
     }
 
-    if (jugador.inventario.length >= MAX_INVENTARIO) {
-        alert("¡Inventario lleno! No puedes recibir más items.");
+    // Mostrar confirmación al jugador
+    let mensajeConfirmacion = `Reclamar recompensa:\n`;
+    if (oroGanado > 0) mensajeConfirmacion += `💰 Oro: +${oroGanado}\n`;
+    if (expGanada > 0) mensajeConfirmacion += `✨ Experiencia: +${expGanada}\n`;
+    if (rubiesGanados > 0) mensajeConfirmacion += `💎 Rubíes: +${rubiesGanados}\n`;
+    if (itemObtenido) mensajeConfirmacion += `🎁 Item: ${itemObtenido.nombre}\n`;
+
+    if (!confirm(`${mensajeConfirmacion}\n¿Aceptar recompensa?`)) {
         return;
     }
 
-    if (mision.recompensa.oro) {
-        const oroConBonus = aplicarBonusEvento('oro', mision.recompensa.oro);
-        jugador.oro += oroConBonus;
+    // Aplicar recompensas
+    jugador.oro += oroGanado;
+    jugador.exp += expGanada;
+    jugador.rubies += rubiesGanados;
+
+    if (itemObtenido) {
+        jugador.inventario.push(itemObtenido);
     }
-    if (mision.recompensa.exp) {
-        const expConBonus = aplicarBonusEvento('exp', mision.recompensa.exp);
-        jugador.exp += expConBonus;
-    }
-    if (mision.recompensa.rubies) {
-        const rubiesConBonus = aplicarBonusEvento('rubies', mision.recompensa.rubies);
-        jugador.rubies += rubiesConBonus;
+
+    // Verificar subida de nivel
+    if (jugador.exp >= jugador.expParaSubir) {
+        subirNivel();
     }
 
     // Eliminar misión (solo diarias y fábrica, historia permanece)
@@ -1751,12 +1356,25 @@ function reclamarRecompensa(id) {
         jugador.misiones.fabrica = jugador.misiones.fabrica.filter(m => m.id !== id);
     } else {
         mision.reclamada = true;
-    }    
+    }
 
-    // Actualizar UI
-    const filtroActivo = document.querySelector(".filtros-misiones button.activo")?.textContent.toLowerCase() || 'todas';
-    actualizarMisionesUI(filtroActivo);
-    actualizarUI();
+    // Actualizar todas las UIs necesarias
+    actualizarMisionesUI(document.querySelector(".filtros-misiones button.activo")?.textContent.toLowerCase() || 'todas');
+
+    // Asegurar que todas las secciones se actualicen
+    actualizarUI(); // Actualiza la vista general
+    if (typeof actualizarRecursosUI === 'function') {
+        actualizarRecursosUI(); // Actualiza específicamente recursos en todas las secciones
+    }
+    if (typeof actualizarInventarioUI === 'function') {
+        actualizarInventarioUI(); // Actualiza el inventario
+    }
+    if (typeof actualizarTiendaUI === 'function') {
+        actualizarTiendaUI(); // Actualiza la tienda si está abierta
+    }
+
+    // Mostrar mensaje de éxito
+    alert(`¡Recompensa reclamada con éxito!\n${mensajeConfirmacion}`);
 }
 
 function reiniciarMisiones() {
@@ -1831,14 +1449,14 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
             if (mision.descripcion.includes("Alcanza el nivel")) {
                 // Extraer el nivel requerido de la descripción
                 const nivelRequerido = parseInt(mision.descripcion.match(/nivel (\d+)/)[1]);
-                
+
                 // Actualizar progreso basado en el nivel actual del jugador
                 if (jugador.nivel >= nivelRequerido) {
                     mision.progreso = mision.requerido; // Forzar completado
                 } else {
                     mision.progreso = jugador.nivel; // Mostrar progreso actual
                 }
-                
+
                 // Marcar como completada si se alcanzó el nivel
                 if (jugador.nivel >= nivelRequerido && !mision.completada) {
                     mision.completada = true;
@@ -1906,16 +1524,12 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
             if (mision.descripcion.includes("Fabrica") && mision.descripcion.includes("items")) {
                 mision.progreso += cantidad;
             }
-            // // Misión específica (ej: "Fabrica 5 armas")
-            // else if (mision.descripcion.includes("Fabrica") && subtipo && mision.descripcion.includes(subtipo)) {
-            //     mision.progreso += cantidad;
-            // }
         });
     }
-    
+
     if (tipo === 'recurso') {
         jugador.misiones.fabrica.forEach(mision => {
-            if (mision.descripcion.includes("Consigue") && 
+            if (mision.descripcion.includes("Consigue") &&
                 mision.descripcion.includes("recurso")) {
                 mision.progreso += cantidad;
             }
@@ -1926,7 +1540,7 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
     jugador.misiones.fabrica.forEach(mision => {
         if (mision.progreso >= mision.requerido && !mision.completada) {
             mision.completada = true;
-            
+
             // Aplicar recompensa de receta si existe
             if (mision.recompensa.receta) {
                 if (!jugador.fabrica.recetasDesbloqueadas.includes(mision.recompensa.receta)) {
@@ -1934,12 +1548,12 @@ function actualizarProgresoMisiones(tipo, cantidad = 1, stat = null, ubicacion =
                     alert(`¡Has desbloqueado una nueva receta!`);
                 }
             }
-            
+
             // Efecto visual
             const card = document.querySelector(`#mision-${mision.id}`);
             if (card) card.classList.add('completada-flash');
         }
-    });    
+    });
 
     // Actualizar la UI de misiones si estamos en esa sección
     if (document.getElementById('misiones').classList.contains('activa')) {
@@ -1956,7 +1570,7 @@ function generarItem(recompensa) {
         const nivelItem = Math.floor(
             Math.random() * (recompensa.item.nivelMax - recompensa.item.nivelMin + 1)
         ) + recompensa.item.nivelMin;
-        
+
         return {
             tipo: recompensa.item.tipo,
             nivel: nivelItem,
@@ -2027,23 +1641,23 @@ const eventos = {
 function iniciarEventosProgramados() {
     // Verificar si ya hay un evento activo
     if (eventos.activo) return;
-    
+
     const ahora = new Date().getTime();
-    
+
     // Cargar último evento desde localStorage
     if (localStorage.getItem('ultimoEvento')) {
         eventos.ultimoEvento = JSON.parse(localStorage.getItem('ultimoEvento'));
     }
-    
+
     // Determinar qué evento toca ahora
     let siguienteEvento;
-    
+
     if (!eventos.ultimoEvento) {
         // Primer evento (Oro)
         siguienteEvento = eventos.lista.find(e => e.orden === 1);
     } else {
         const tiempoDesdeUltimoEvento = ahora - eventos.ultimoEvento.fin;
-        
+
         if (tiempoDesdeUltimoEvento >= eventos.intervaloEntreEventos) {
             // Calcular siguiente evento en el ciclo
             const siguienteOrden = eventos.ultimoEvento.orden % 5 + 1;
@@ -2055,54 +1669,54 @@ function iniciarEventosProgramados() {
             return;
         }
     }
-    
+
     // Activar el evento
     activarEvento(siguienteEvento);
-    
+
     // Programar próximo evento
     setTimeout(iniciarEventosProgramados, eventos.intervaloEntreEventos + siguienteEvento.duracion);
 }
 
 function activarEvento(evento) {
-    eventos.activo = {...evento};
+    eventos.activo = { ...evento };
     eventos.activo.inicio = new Date().getTime();
     eventos.activo.fin = eventos.activo.inicio + evento.duracion;
-    
+
     // Guardar en localStorage
     localStorage.setItem('eventoActivo', JSON.stringify(eventos.activo));
     localStorage.setItem('ultimoEvento', JSON.stringify(eventos.activo));
-    
+
     // Mostrar notificación
     mostrarNotificacionEvento(evento);
-    
+
     // Establecer temporizador para finalizar el evento
     eventos.temporizador = setTimeout(() => {
         finalizarEvento();
     }, evento.duracion);
-    
+
     // Actualizar UI
     actualizarEventoUI();
 }
 
 function finalizarEvento() {
     if (!eventos.activo) return;
-    
+
     // Mostrar mensaje de finalización
     document.getElementById("log-combate").textContent += `\n\nEl evento "${eventos.activo.nombre}" ha terminado.`;
-    
+
     // Limpiar evento
     eventos.activo = null;
     clearTimeout(eventos.temporizador);
     localStorage.removeItem('eventoActivo');
-    
+
     // Actualizar UI
     actualizarEventoUI();
 }
 
 function aplicarBonusEvento(tipo, cantidad) {
     if (!eventos.activo) return cantidad;
-    
-    switch(eventos.activo.tipo) {
+
+    switch (eventos.activo.tipo) {
         case 'oro':
             if (tipo === 'oro') return Math.floor(cantidad * eventos.activo.bonus);
             break;
@@ -2122,7 +1736,7 @@ function aplicarBonusEvento(tipo, cantidad) {
             }
             break;
     }
-    
+
     return cantidad;
 }
 
@@ -2131,8 +1745,8 @@ function mostrarNotificacionEvento(evento) {
     let mensaje = `🎉 **EVENTO ESPECIAL: ${evento.nombre.toUpperCase()}** 🎉\n`;
     mensaje += `⏳ Duración: 30 minutos\n\n`;
     mensaje += `${evento.descripcion}\n\n`;
-    
-    switch(evento.tipo) {
+
+    switch (evento.tipo) {
         case 'oro':
             mensaje += `▸ Todas las recompensas de oro ×${evento.bonus}\n`;
             break;
@@ -2170,26 +1784,26 @@ function girarRuleta() {
     ];
 
     const resultado = resultados[Math.floor(Math.random() * resultados.length)];
-    
+
     // Aplicar resultados
     if (resultado.oro > 0 || jugador.oro >= Math.abs(resultado.oro)) {
         jugador.oro += resultado.oro;
     }
     jugador.exp += resultado.exp;
     jugador.rubies += resultado.rubies;
-    
+
     // Mostrar resultado
     const ruletaContainer = document.getElementById("ruleta-container");
     ruletaContainer.innerHTML = `
-        <div class="resultado-ruleta">
-            <h3>${resultado.texto}</h3>
-            ${resultado.oro > 0 ? `<p>Oro: +${resultado.oro}</p>` : resultado.oro < 0 ? `<p>Oro: ${resultado.oro}</p>` : ''}
-            ${resultado.exp > 0 ? `<p>Experiencia: +${resultado.exp}</p>` : ''}
-            ${resultado.rubies > 0 ? `<p>rubies: +${resultado.rubies}</p>` : ''}
-            <button onclick="cerrarRuleta()">Cerrar</button>
-        </div>
-    `;
-    
+    <div class="resultado-ruleta">
+        <h3>${resultado.texto}</h3>
+        ${resultado.oro > 0 ? `<p>Oro: +${resultado.oro}</p>` : resultado.oro < 0 ? `<p>Oro: ${resultado.oro}</p>` : ''}
+        ${resultado.exp > 0 ? `<p>Experiencia: +${resultado.exp}</p>` : ''}
+        ${resultado.rubies > 0 ? `<p>rubies: +${resultado.rubies}</p>` : ''}
+        <button onclick="cerrarRuleta()">Cerrar</button>
+    </div>
+`;
+
     actualizarUI();
 }
 
@@ -2206,56 +1820,56 @@ function actualizarEventoUI() {
     // Limpiar contenedores
     if (info) info.innerHTML = '';
     if (timer) timer.textContent = '';
-    
+
     // Si hay un evento activo
     if (eventos.activo) {
         // Mostrar el panel del evento
         container.style.display = "block";
-        
+
         // Configurar la información del evento
         info.innerHTML = `
-            <h3>${eventos.activo.nombre}</h3>
-            <p>${eventos.activo.descripcion}</p>
-            <div class="beneficios-evento">
-                ${obtenerBeneficiosEventoHTML(eventos.activo)}
-            </div>
-        `;
-        
+        <h3>${eventos.activo.nombre}</h3>
+        <p>${eventos.activo.descripcion}</p>
+        <div class="beneficios-evento">
+            ${obtenerBeneficiosEventoHTML(eventos.activo)}
+        </div>
+    `;
+
         // Configurar el temporizador
         const ahora = new Date().getTime();
         const finEvento = eventos.activo.inicio + eventos.activo.duracion;
         const tiempoRestante = finEvento - ahora;
-        
+
         // Si el evento aún no ha terminado
         if (tiempoRestante > 0) {
             // Actualizar el temporizador inmediatamente
             actualizarTemporizadorEvento(tiempoRestante);
-            
+
             // Actualizar el temporizador cada segundo
             if (eventos.temporizadorUI) {
                 clearInterval(eventos.temporizadorUI);
             }
-            
+
             eventos.temporizadorUI = setInterval(() => {
                 const ahora = new Date().getTime();
                 const tiempoRestante = finEvento - ahora;
-                
+
                 if (tiempoRestante <= 0) {
                     clearInterval(eventos.temporizadorUI);
                     timer.textContent = "Evento terminado";
                     return;
                 }
-                
+
                 actualizarTemporizadorEvento(tiempoRestante);
             }, 1000);
-            
+
             // Mostrar botón de ruleta si es el evento de azar
             if (eventos.activo.tipo === 'azar' && btnRuletaContainer) {
                 btnRuletaContainer.innerHTML = `
-                    <button class="btn-ruleta" onclick="girarRuleta()">
-                        🎡 Girar Ruleta
-                    </button>
-                `;
+                <button class="btn-ruleta" onclick="girarRuleta()">
+                    🎡 Girar Ruleta
+                </button>
+            `;
             }
         } else {
             timer.textContent = "Evento terminado";
@@ -2265,7 +1879,7 @@ function actualizarEventoUI() {
         // No hay evento activo, ocultar el panel
         container.style.display = "none";
         if (btnRuletaContainer) btnRuletaContainer.innerHTML = '';
-        
+
         // Limpiar temporizador UI si existe
         if (eventos.temporizadorUI) {
             clearInterval(eventos.temporizadorUI);
@@ -2278,19 +1892,19 @@ function actualizarEventoUI() {
 function actualizarTemporizadorEvento(tiempoRestante) {
     const timer = document.getElementById("evento-timer");
     if (!timer) return;
-    
+
     const minutos = Math.floor(tiempoRestante / 60000);
     const segundos = Math.floor((tiempoRestante % 60000) / 1000);
-    
+
     timer.innerHTML = `
-        <strong>Tiempo restante:</strong> 
-        ${minutos}:${segundos < 10 ? '0' : ''}${segundos}
-    `;
+    <strong>Tiempo restante:</strong> 
+    ${minutos}:${segundos < 10 ? '0' : ''}${segundos}
+`;
 }
 
 // Función auxiliar para obtener los beneficios del evento en HTML
 function obtenerBeneficiosEventoHTML(evento) {
-    switch(evento.tipo) {
+    switch (evento.tipo) {
         case 'oro':
             return `<p>💰 <strong>Oro ×${evento.bonus}</strong></p>`;
         case 'rubies':
@@ -2299,10 +1913,10 @@ function obtenerBeneficiosEventoHTML(evento) {
             return `<p>✨ <strong>Experiencia ×${evento.bonus}</strong></p>`;
         case 'combo':
             return `
-                <p>💰 <strong>Oro ×${evento.bonus.oro}</strong></p>
-                <p>✨ <strong>Experiencia ×${evento.bonus.exp}</strong></p>
-                <p>💎 <strong>+${evento.bonus.rubies * 100}% rubies</strong></p>
-            `;
+            <p>💰 <strong>Oro ×${evento.bonus.oro}</strong></p>
+            <p>✨ <strong>Experiencia ×${evento.bonus.exp}</strong></p>
+            <p>💎 <strong>+${evento.bonus.rubies * 100}% rubies</strong></p>
+        `;
         case 'azar':
             return `<p>🎡 <strong>Gira la ruleta para premios especiales</strong></p>`;
         default:
@@ -2376,28 +1990,28 @@ const eventosActivos = [
     }
 ];
 
-    // Sistema de rotación automática
-    let ultimoCambioEvento = localStorage.getItem('ultimoCambioEvento') || 0;
-    const TIEMPO_ROTACION = 3 * 24 * 60 * 60 * 1000; // 3 días en milisegundos
+// Sistema de rotación automática
+let ultimoCambioEvento = localStorage.getItem('ultimoCambioEvento') || 0;
+const TIEMPO_ROTACION = 3 * 24 * 60 * 60 * 1000; // 3 días en milisegundos
 
 function rotarEvento() {
     const ahora = Date.now();
-    
+
     // Si pasaron 3 días desde el último cambio
     if (ahora - ultimoCambioEvento >= TIEMPO_ROTACION) {
         // Desactivar todos los eventos primero
         eventosActivos.forEach(e => e.activo = false);
-        
+
         // Seleccionar evento aleatorio (excepto el último activo para evitar repeticiones)
         const eventosDisponibles = eventosActivos.filter(e => !e.activo);
         const eventoAleatorio = eventosDisponibles[Math.floor(Math.random() * eventosDisponibles.length)];
-        
+
         eventoAleatorio.activo = true;
         ultimoCambioEvento = ahora;
         localStorage.setItem('ultimoCambioEvento', ultimoCambioEvento);
-        
+
         console.log(`Nuevo evento activado: ${eventoAleatorio.nombre}`);
-        
+
         // Desactivar automáticamente después de 24 horas
         setTimeout(() => {
             eventoAleatorio.activo = false;
@@ -2412,10 +2026,10 @@ rotarEvento();
 setInterval(rotarEvento, 60 * 60 * 1000);
 
 function aplicarBonus(recompensa) {
-    let modificada = {...recompensa};
-    
+    let modificada = { ...recompensa };
+
     eventosActivos.filter(e => e.activo).forEach(evento => {
-        switch(evento.tipo) {
+        switch (evento.tipo) {
             case "oro":
                 modificada.oro = Math.floor(modificada.oro * evento.bonus);
                 break;
@@ -2432,26 +2046,26 @@ function aplicarBonus(recompensa) {
                 break;
         }
     });
-    
+
     return modificada;
 }
 
 function actualizarUIEvento() {
     const evento = eventosActivos.find(e => e.activo);
     const contenedor = document.getElementById("evento-activo");
-    
+
     if (evento) {
         contenedor.innerHTML = `
-            <div class="evento-banner" style="border-color: ${getColorPorTipo(evento.tipo)}">
-                <span>${evento.icono} EVENTO ACTIVO</span>
-                <h3>${evento.nombre}</h3>
-                <p>${evento.descripcion}</p>
-                ${evento.tipo === "azar" ? 
-                    '<button onclick="girarRuleta()">GIRAR RUELTA</button>' : 
-                    '<small>Disponible por 24 horas</small>'
-                }
-            </div>
-        `;
+        <div class="evento-banner" style="border-color: ${getColorPorTipo(evento.tipo)}">
+            <span>${evento.icono} EVENTO ACTIVO</span>
+            <h3>${evento.nombre}</h3>
+            <p>${evento.descripcion}</p>
+            ${evento.tipo === "azar" ?
+                '<button onclick="girarRuleta()">GIRAR RUELTA</button>' :
+                '<small>Disponible por 24 horas</small>'
+            }
+        </div>
+    `;
     } else {
         const tiempoRestante = TIEMPO_ROTACION - (Date.now() - ultimoCambioEvento);
         const horas = Math.floor((tiempoRestante % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -2469,20 +2083,20 @@ function chanceItemConEvento() {
 function calcularRubiesConEvento() {
     const baseChance = 0.1; // 10% base
     let chance = baseChance;
-    
+
     eventosActivos.filter(e => e.activo).forEach(evento => {
         if (evento.tipo === "rubies") chance += evento.bonus;
         if (evento.tipo === "combo") chance += evento.bonus.rubies;
     });
-    
+
     return Math.random() < chance ? 1 : 0;
 }
 
 function aplicarBonificacionesEvento(recompensa) {
-    const modificada = {...recompensa};
-    
+    const modificada = { ...recompensa };
+
     eventosActivos.filter(e => e.activo).forEach(evento => {
-        switch(evento.tipo) {
+        switch (evento.tipo) {
             case "oro":
                 modificada.oro = Math.floor(modificada.oro * evento.bonus);
                 break;
@@ -2495,51 +2109,11 @@ function aplicarBonificacionesEvento(recompensa) {
                 break;
         }
     });
-    
+
     return modificada;
 }
 
-function usarPocion(pocion) {
-    // Calcular la cantidad de curación basada en porcentaje de vida máxima
-    const cantidadCuracion = Math.floor(jugador.vidaMax * pocion.curacion);
-    
-    // Calcular cuánta vida se puede recuperar (sin exceder el máximo)
-    const vidaRecuperada = Math.min(jugador.vidaMax - jugador.vida, cantidadCuracion);
-    
-    // Verificar si realmente necesita curación
-    if (vidaRecuperada <= 0) {
-        const logCombate = document.getElementById("log-combate");
-        logCombate.textContent = `💚 No necesitas usar ${pocion.nombre}. Ya tienes la vida al máximo (${jugador.vida}/${jugador.vidaMax}).` + 
-            (logCombate.textContent ? `\n\n${logCombate.textContent}` : '');
-        return;
-    }
-    
-    // Aplicar la curación
-    jugador.vida += vidaRecuperada;
-    
-    // Eliminar la poción del inventario
-    const index = jugador.inventario.findIndex(i => i.id === pocion.id);
-    if (index !== -1) {
-        jugador.inventario.splice(index, 1);
-    }
-    
-    // Mostrar mensaje
-    const porcentajeCurado = (pocion.curacion * 100).toFixed(0);
-    const logCombate = document.getElementById("log-combate");
-    logCombate.textContent = `💚 Has usado ${pocion.nombre} y recuperado ${vidaRecuperada} vida (${porcentajeCurado}% de tu vida máxima).` + 
-        (logCombate.textContent ? `\n\n${logCombate.textContent}` : '');
-    
-    // Actualizar la UI
-    actualizarUI();
-    
-    // Detener la curación automática si estamos al máximo
-    if (jugador.vida >= jugador.vidaMax && jugador.intervaloCuracion) {
-        clearInterval(jugador.intervaloCuracion);
-        document.getElementById("curacion-timer").textContent = "Completo";
-    }
-}
-
-window.addEventListener('load', cargarJuego);
+document.addEventListener('DOMContentLoaded', cargarJuego);
 // window.addEventListener('beforeunload', () => {
 //     localStorage.setItem('gladiatusSave', JSON.stringify(jugador));
 // });

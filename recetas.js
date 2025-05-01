@@ -408,6 +408,17 @@ function actualizarColaProduccionUI() {
     });
 }
 
+function fabricarItem(receta) {
+    const item = generarItemAleatorio(jugador.nivel + 5); // Items más fuertes
+    
+    // Garantizar al menos 1 afijo en items fabricados
+    if (Math.random() < 0.7 || item.rareza !== "común") {
+      item.nombre = generarNombreConAfijos(item, { forcePrefix: true });
+    }
+    
+    return item;
+}
+
 function filtrarRecetas(filtro) {
     const lista = document.getElementById("lista-recetas");
     lista.innerHTML = "";

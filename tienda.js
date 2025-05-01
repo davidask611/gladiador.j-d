@@ -132,7 +132,7 @@ function actualizarTiendaUI() {
         <h4>${item.nombre}</h4>
         <p>${item.tipo === 'arma' ? `Daño: ${item.danoMin}-${item.danoMax}` : `Defensa: +${item.defensa}`}</p>
         <button onclick="comprarItem(${item.id})" class="${item.precioRubies > 0 ? 'btn-premium' : 'btn-oro'}">
-          ${item.precioRubies > 0 ? `💎 ${item.precioRubies}` : `🪙 ${item.precioOro}`}
+          ${item.precioRubies > 0 ? `💎 ${item.precioRubies}` : `💰 ${item.precioOro}`}
         </button>
       </div>
     `).join('');
@@ -145,7 +145,7 @@ function actualizarTiendaUI() {
         <div class="item-inventario">
           <img src="${item.img}" alt="${item.nombre}">
           <p>${item.nombre}</p>
-          <button onclick="venderItem(${item.id})" class="btn-vender">Vender (${Math.floor(item.precioOro * 0.5)}🪙)</button>
+          <button onclick="venderItem(${item.id})" class="btn-vender">Vender (${Math.floor(item.precioOro * 0.5)}💰)</button>
         </div>
       `).join('');
     } else {
@@ -181,37 +181,86 @@ window.addEventListener('load', inicializarTienda);
 
 // Función para comprar un item (ya existe, pero la modificamos)
 function comprarItem(itemId) {
-  const item = tienda.itemsDisponibles.find(i => i.id === itemId);
-  if (!item) return;
+  // Validar que el jugador existe
+  if (!window.jugador) {
+    console.error('Error: No se encontró el objeto jugador');
+    return false;
+  }
 
-  // Verificar si hay suficientes recursos
+  // Buscar el item en la tienda
+  const item = tienda.itemsDisponibles.find(i => i.id === itemId);
+  if (!item) {
+    console.error(`Error: Item con ID ${itemId} no encontrado en la tienda`);
+    return false;
+  }
+
+  // Verificar inventario lleno
+  if (window.jugador.inventario.length >= MAX_INVENTARIO) {
+    alert('¡Tu inventario está lleno! No puedes comprar más items.');
+    return false;
+  }
+
+  // Proceso de compra con rubíes
   if (item.precioRubies > 0) {
     if (window.jugador.rubies < item.precioRubies) {
-      alert('No tienes suficientes rubíes para comprar este item');
-      return;
+      alert(`Necesitas ${item.precioRubies} rubíes para comprar este item (tienes ${window.jugador.rubies})`);
+      return false;
     }
+    
+    if (!confirm(`¿Gastar ${item.precioRubies} rubíes en ${item.nombre}?`)) {
+      return false;
+    }
+    
     window.jugador.rubies -= item.precioRubies;
-  } else {
+  } 
+  // Proceso de compra con oro
+  else {
     if (window.jugador.oro < item.precioOro) {
-      alert('No tienes suficiente oro para comprar este item');
-      return;
+      alert(`Necesitas ${item.precioOro} de oro para comprar este item (tienes ${window.jugador.oro})`);
+      return false;
     }
+    
+    if (!confirm(`¿Gastar ${item.precioOro} de oro en ${item.nombre}?`)) {
+      return false;
+    }
+    
     window.jugador.oro -= item.precioOro;
   }
 
-  // Añadir el item al inventario del jugador
-  window.jugador.inventario.push(item);
-
-  // Actualizar ambas UIs
-  actualizarTiendaUI();
-  actualizarRecursosUI();
+  // Clonar el item para evitar referencias
+  const itemComprado = {...item};
   
-  // Asegurarnos de que la Vista General también se actualice
-  if (typeof actualizarInventarioUI === 'function') {
-    actualizarInventarioUI();
+  // Añadir al inventario
+  window.jugador.inventario.push(itemComprado);
+
+  // Actualizar interfaces
+  try {
+    actualizarTiendaUI();
+    actualizarRecursosUI();
+    // También asegúrate de llamar a actualizarUI() general si existe
+    if (typeof actualizarUI === 'function') {
+      actualizarUI();
+    }
+    
+    if (typeof actualizarInventarioUI === 'function') {
+      actualizarInventarioUI();
+    }
+    
+    // Actualizar progreso de misiones (si existe)
+    if (typeof actualizarProgresoMisiones === 'function') {
+      actualizarProgresoMisiones('conseguirItem', 1);
+    }
+  } catch (error) {
+    console.error('Error al actualizar interfaces:', error);
   }
 
-  alert(`¡Has comprado ${item.nombre} con éxito!`);
+  // Notificación de compra exitosa
+  const mensajeExito = item.precioRubies > 0 
+    ? `¡Has comprado ${item.nombre} por ${item.precioRubies} rubíes!`
+    : `¡Has comprado ${item.nombre} por ${item.precioOro} de oro!`;
+  
+  alert(mensajeExito);
+  return true;
 }
 
 function venderItem(itemId) {
@@ -241,12 +290,80 @@ function venderItem(itemId) {
 }
 
 function actualizarRecursosUI() {
-  if (window.jugador) {
-    const oroElement = document.getElementById('oro-value');
-    const rubiesElement = document.getElementById('rubies-value');
+  if (!window.jugador) return;
+  
+  // Actualizar todos los elementos de oro y rubíes en todas las secciones
+  document.querySelectorAll('[id*="oro"], [id*="rubies"]').forEach(el => {
+    if (el.id.includes("oro")) {
+      el.textContent = window.jugador.oro;
+    } else if (el.id.includes("rubies")) {
+      el.textContent = window.jugador.rubies;
+    }
+  });
+  
+  // Actualizar botones que dependen de estos valores
+  document.querySelectorAll("button[onclick='comprarCombate()']").forEach(btn => {
+    btn.disabled = window.jugador.rubies < 1;
+  });
+}
+
+function generarItemsTienda() {
+  const tiendaContainer = document.getElementById("tienda-items");
+  tiendaContainer.innerHTML = "";
+
+  // 1. Generar 6-8 items con nivel acorde al jugador (±5 niveles)
+  const cantidadItems = 6 + Math.floor(Math.random() * 3);
+  const nivelBase = Math.max(1, jugador.nivel - 3 + Math.floor(Math.random() * 7));
+
+  for (let i = 0; i < cantidadItems; i++) {
+    const item = generarItemAleatorio(nivelBase);
     
-    if (oroElement) oroElement.textContent = window.jugador.oro;
-    if (rubiesElement) rubiesElement.textContent = window.jugador.rubies;
+    // 2. Aplicar afijos adicionales en la tienda (33% de chance extra)
+    if (Math.random() < 0.33 && item.rareza !== "común") {
+      item.nombre = generarNombreConAfijos(item, { forceSuffix: true });
+    }
+
+    // 3. Ajustar precio por afijos (multiplicador 1.2x por afijo)
+    const multiplicadorAfijos = 1 + (0.2 * (item.nombre.split(" ").length - 2)); // Ej: "Espada" vs "Siniestro Espada del Abismo"
+    item.precio = Math.floor(item.precio * multiplicadorAfijos * (item.rareza === "legendario" ? 1.5 : 1));
+
+    // 4. Renderizar en UI
+    renderizarItemTienda(item, tiendaContainer);
+  }
+}
+
+function renderizarItemTienda(item, container) {
+  const itemElement = document.createElement("div");
+  itemElement.className = "item-tienda";
+  itemElement.style.borderColor = item.colorRareza;
+  itemElement.innerHTML = `
+    <div class="item-header" style="color: ${item.colorRareza}">
+      <h3>${item.nombre}</h3>
+      <span class="item-tier">Nv. ${item.nivel}</span>
+    </div>
+    <img src="${item.img}" alt="${item.nombre}">
+    <div class="item-stats">
+      ${item.danoMin ? `<p>Daño: <strong>${item.danoMin}-${item.danoMax}</strong></p>` : ""}
+      ${item.defensa ? `<p>Defensa: <strong>+${item.defensa}</strong></p>` : ""}
+      ${item.efectoUnico ? `<p class="efecto-unico">✨ ${item.efectoUnico}</p>` : ""}
+    </div>
+    <p class="precio-tienda">💰 ${item.precio} oro</p>
+    <button onclick="comprarItemTienda(${item.id})">Comprar</button>
+  `;
+  container.appendChild(itemElement);
+}
+
+function comprarItemTienda(itemId) {
+  const item = tienda.itemsDisponibles.find(i => i.id === itemId);
+  if (!item) return;
+
+  if (jugador.oro >= item.precio) {
+    jugador.oro -= item.precio;
+    jugador.inventario.push(item);
+    actualizarUI();
+    actualizarTiendaUI();
+  } else {
+    alert("¡No tienes suficiente oro!");
   }
 }
 
