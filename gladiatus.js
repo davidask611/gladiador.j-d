@@ -54,7 +54,18 @@ const jugador = {
     victorias: 0,
     familia: "Sin clan",
     danoMin: 2,
-    danoMax: 2,
+    danoMax: 4,
+    armadura: 0,
+    precision: 75,
+    evasion: 10,
+    combatesDisponibles: 12,
+    combatesMaximos: 12,
+    tiempoRecarga: 300000, // 5 minutos en milisegundos
+    tiempoCuracion: 120000, // 2 minutos en milisegundos
+    vidaPorCuracion: 20,
+    intervaloCuracion: null,
+    ultimoCombate: null,
+    ultimaCuracion: null,
 
     statsBase: {
         fuerza: 5,
